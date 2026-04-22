@@ -1,0 +1,19 @@
+.DS_Store
+node_modules/
+dist/
+build/
+out/
+release/
+*.log
+
+# Local runtime data
+settings.json
+jobs.json
+downloads/
+
+# Local generated/exported media folders
+*.mp4
+视频*/
+
+# Local service artifacts
+*.pid

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Volcengine Video Studio</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Volcengine Fast Launch</p>
+          <h1>首尾帧视频生成控制台</h1>
+          <p class="lead">上传首尾帧，配置火山视频模型，自动创建任务、轮询状态并下载结果到本地。</p>
+        </div>
+        <div class="hero-actions">
+          <button id="themeToggle" class="ghost" type="button">切换浅色</button>
+          <div class="hero-note">
+            <span>下载目录</span>
+            <strong>/Users/silence/Documents/volcengine-video-studio/downloads</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <section class="panel form-panel">
+          <form id="job-form">
+            <div class="section-head">
+              <h2>生成配置</h2>
+              <button id="saveSettingsBtn" class="ghost" type="button">保存配置</button>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>API Key</span>
+                <input id="apiKey" name="apiKey" type="password" placeholder="输入一次后可保存" required />
+              </label>
+              <label>
+                <span>模型</span>
+                <select id="model" name="model" required></select>
+              </label>
+            </div>
+
+            <p class="field-tip" id="modelTip"></p>
+
+            <div class="grid two">
+              <label>
+                <span>生成模式</span>
+                <div class="mode-switch" id="generationModeSwitch">
+                  <button type="button" class="mode-option active" data-mode="single">单镜头模式</button>
+                  <button type="button" class="mode-option" data-mode="multi">多镜头模式</button>
+                </div>
+                <input id="generationMode" name="generationMode" type="hidden" value="single" />
+              </label>
+              <label id="multiShotCountField" hidden>
+                <span>镜头数量</span>
+                <select id="multiShotCount" name="multiShotCount">
+                  <option value="1">1</option>
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>项目目录</span>
+                <div class="picker-row">
+                  <button id="projectFolderBtn" class="ghost" type="button">选择项目目录</button>
+                  <input id="projectPath" name="projectPath" type="text" placeholder="未选择目录" readonly />
+                </div>
+                <input id="projectFolderFallback" type="file" webkitdirectory directory multiple hidden />
+              </label>
+              <label>
+                <span>视频名称</span>
+                <input id="videoName" name="videoName" type="text" list="videoNameSuggestions" placeholder="例如：视频 1" />
+                <datalist id="videoNameSuggestions"></datalist>
+              </label>
+            </div>
+
+            <div class="grid five">
+              <label>
+                <span>视频比例</span>
+                <select id="ratio" name="ratio">
+                  <option value="21:9">21:9</option>
+                  <option value="16:9" selected>16:9</option>
+                  <option value="9:16">9:16</option>
+                  <option value="1:1">1:1</option>
+                </select>
+              </label>
+              <label>
+                <span>分辨率</span>
+                <select id="resolution" name="resolution">
+                  <option value="720p">720p</option>
+                  <option value="1080p" selected>1080p</option>
+                </select>
+              </label>
+              <label>
+                <span>FPS</span>
+                <select id="fps" name="fps">
+                  <option value="12">12</option>
+                  <option value="24" selected>24</option>
+                  <option value="25">25</option>
+                  <option value="30">30</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid four">
+              <label>
+                <span>轮询间隔（毫秒）</span>
+                <input id="pollIntervalMs" name="pollIntervalMs" type="number" min="1000" step="1000" value="6000" />
+              </label>
+              <label>
+                <span>随机种子</span>
+                <input id="seed" name="seed" type="number" placeholder="可选" />
+              </label>
+              <label class="checkbox">
+                <span>水印</span>
+                <input id="watermark" name="watermark" type="checkbox" />
+              </label>
+              <label class="checkbox">
+                <span>生成音频</span>
+                <input id="generateAudio" name="generateAudio" type="checkbox" />
+              </label>
+              <label>
+                <span>提交策略</span>
+                <input id="modeSummary" type="text" value="Seedance 1.5 Pro 严格模式" disabled />
+              </label>
+            </div>
+
+            <section id="singleModeFields">
+              <div class="grid two">
+                <label>
+                  <span>镜头编号</span>
+                  <input id="shotNumber" name="shotNumber" type="text" placeholder="例如：1" />
+                </label>
+                <label>
+                  <span>时长（秒）</span>
+                  <input id="duration" name="duration" type="number" min="1" max="30" value="4" />
+                </label>
+              </div>
+
+              <label class="prompt-card">
+                <span>提示词</span>
+                <textarea
+                  id="prompt"
+                  name="prompt"
+                  rows="6"
+                  placeholder="在这里明确描述镜头运动、节奏、风格、镜头语言和终态。"
+                ></textarea>
+              </label>
+
+              <div class="grid two">
+                <label>
+                  <span>首帧图片</span>
+                  <input id="firstFrame" name="firstFrame" type="file" accept="image/*" />
+                </label>
+                <label>
+                  <span>尾帧图片</span>
+                  <input id="lastFrame" name="lastFrame" type="file" accept="image/*" />
+                </label>
+              </div>
+            </section>
+
+            <section id="multiModeFields" hidden>
+              <div class="multi-mode-head">
+                <h3>多镜头配置</h3>
+                <p>每个镜头独立设置首尾帧、时长和提示词；系统会自动在相邻镜头间插入 4 秒转场视频。</p>
+              </div>
+              <div id="multiShotsContainer" class="multi-shots"></div>
+            </section>
+
+            <label>
+              <span>额外参数 JSON</span>
+              <textarea
+                id="extraParams"
+                name="extraParams"
+                rows="5"
+                placeholder='例如：{"return_last_frame": true}'
+              ></textarea>
+            </label>
+
+            <details class="advanced-panel">
+              <summary>高级配置</summary>
+              <div class="grid two advanced-grid">
+                <label>
+                  <span>创建任务接口</span>
+                  <input
+                    id="createEndpoint"
+                    name="createEndpoint"
+                    type="url"
+                    value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
+                    required
+                  />
+                </label>
+                <label>
+                  <span>查询任务接口模板</span>
+                  <input
+                    id="queryEndpointTemplate"
+                    name="queryEndpointTemplate"
+                    type="text"
+                    value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}"
+                    required
+                  />
+                </label>
+              </div>
+            </details>
+
+            <div class="actions">
+              <button type="submit" id="submitBtn">创建生成任务</button>
+              <span id="formStatus" class="form-status"></span>
+            </div>
+          </form>
+        </section>
+
+        <aside class="panel jobs-panel">
+          <div class="section-head">
+            <h2>任务状态</h2>
+            <button id="refreshBtn" class="ghost" type="button">刷新</button>
+          </div>
+          <div id="jobs" class="jobs"></div>
+        </aside>
+      </section>
+    </main>
+
+    <template id="job-template">
+      <details class="job-card">
+        <summary class="job-summary">
+          <div class="job-top">
+            <div>
+              <div class="job-status-row">
+                <span class="badge"></span>
+                <span class="progress"></span>
+              </div>
+              <h3 class="job-prompt"></h3>
+            </div>
+            <div class="job-time"></div>
+          </div>
+          <div class="job-compact-meta"></div>
+        </summary>
+        <div class="job-body">
+          <div class="job-preview-wrap">
+            <video class="job-preview" controls playsinline preload="metadata"></video>
+          </div>
+          <div class="job-meta"></div>
+          <div class="job-links"></div>
+          <div class="job-error-actions"></div>
+          <details class="job-raw">
+            <summary>查看原始返回</summary>
+            <pre class="job-json"></pre>
+          </details>
+        </div>
+      </details>
+    </template>
+
+    <template id="multi-shot-template">
+      <article class="multi-shot-card">
+        <div class="multi-shot-head">
+          <h3 class="multi-shot-title"></h3>
+          <span class="multi-shot-transition"></span>
+        </div>
+        <div class="grid two">
+          <label>
+            <span>首帧图片</span>
+            <input class="multi-first-frame" type="file" accept="image/*" />
+          </label>
+          <label>
+            <span>尾帧图片</span>
+            <input class="multi-last-frame" type="file" accept="image/*" />
+          </label>
+        </div>
+        <div class="grid two">
+          <label>
+            <span>时长（秒）</span>
+            <input class="multi-duration" type="number" min="1" max="30" value="4" />
+          </label>
+          <label>
+            <span>镜头编号</span>
+            <input class="multi-shot-number" type="text" readonly />
+          </label>
+        </div>
+        <label class="prompt-card">
+          <span>提示词</span>
+          <textarea class="multi-prompt" rows="5" placeholder="描述这个镜头的运动、风格与节奏。"></textarea>
+        </label>
+      </article>
+    </template>
+
+    <script src="/app.js" defer></script>
+  </body>
+  </html>

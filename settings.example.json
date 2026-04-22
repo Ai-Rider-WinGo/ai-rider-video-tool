@@ -1,0 +1,23 @@
+{
+  "model": "doubao-seedance-1-5-pro-251215",
+  "createEndpoint": "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
+  "queryEndpointTemplate": "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}",
+  "ratio": "16:9",
+  "resolution": "1080p",
+  "duration": 4,
+  "fps": 24,
+  "pollIntervalMs": 6000,
+  "seed": "",
+  "watermark": false,
+  "generateAudio": false,
+  "extraParams": "",
+  "apiKey": "",
+  "videoName": "",
+  "shotNumber": "",
+  "videoNames": [],
+  "projectPath": "",
+  "projectPathLabel": "",
+  "projectPaths": [],
+  "generationMode": "single",
+  "multiShotCount": 2
+}
