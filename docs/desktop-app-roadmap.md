@@ -1,4 +1,4 @@
-# AI-Rider Desktop App Roadmap
+# AI-Rider｜首尾帧生成视频工具 Roadmap
 
 ## Goal
 

@@ -1,0 +1,39 @@
+{
+  "name": "ai-rider-desktop-client",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-Rider first/last-frame video generation desktop tool.",
+  "main": "desktop/main.js",
+  "scripts": {
+    "setup:desktop": "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ npm install",
+    "check:env": "node scripts/check-env.js",
+    "start:web": "node server.js",
+    "start:desktop": "electron .",
+    "desktop": "npm run start:desktop",
+    "build:mac": "electron-builder --mac",
+    "postinstall": "npm run check:env"
+  },
+  "build": {
+    "appId": "com.ai-rider.desktop-client",
+    "productName": "AI-Rider｜首尾帧生成视频工具",
+    "icon": "desktop/icon.icns",
+    "files": [
+      "desktop/**/*",
+      "public/**/*",
+      "server.js",
+      "settings.example.json",
+      "README.md",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.video"
+    }
+  },
+  "devDependencies": {
+    "electron": "^41.2.2",
+    "electron-builder": "^26.0.0"
+  }
+}

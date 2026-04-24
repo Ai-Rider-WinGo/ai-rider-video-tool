@@ -1,6 +1,13 @@
-# AI-Rider｜首尾帧视频输出桌面客户端
+# AI-Rider｜首尾帧生成视频工具
 
-一个最快上线版的本地 Web 控制台，用来做“首帧 + 尾帧 + 提示词”的火山引擎视频生成。
+一个面向桌面端的首尾帧视频生成工具，用来做“首帧 + 尾帧 + 提示词”的火山引擎视频生成。
+
+当前稳定版本：`1.1.3`
+
+版本档案：
+
+- [版本历史](/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端/docs/version-history.md)
+- [1.x 版本档案](/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端/docs/versions/1.0.0.md)
 
 ## 功能
 
@@ -15,9 +22,40 @@
 
 ## 启动
 
+### 桌面端环境安装
+
 ```bash
 cd '/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端'
-node server.js
+npm run setup:desktop
+npm run check:env
+```
+
+需要本机已安装：
+
+- Node.js 20 LTS 或更新版本
+- npm 10 或更新版本
+- Git
+- ffmpeg / ffprobe
+
+macOS 可用 Homebrew 安装视频工具：
+
+```bash
+brew install ffmpeg
+```
+
+详细说明见：`docs/desktop-environment.md`
+
+### 启动桌面端
+
+```bash
+npm run start:desktop
+```
+
+### 启动 Web 版
+
+```bash
+cd '/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端'
+npm run start:web
 ```
 
 浏览器打开：

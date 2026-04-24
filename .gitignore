@@ -17,3 +17,7 @@ downloads/
 
 # Local service artifacts
 *.pid
+
+# Local browser automation artifacts
+.playwright-cli/
+output/.DS_Store

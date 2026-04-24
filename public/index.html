@@ -3,22 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Volcengine Video Studio</title>
+    <title>AI-Rider｜首尾帧生成视频工具</title>
+    <link rel="icon" href="/ai-rider-logo.png" />
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
     <main class="shell">
       <header class="hero">
-        <div>
-          <p class="eyebrow">Volcengine Fast Launch</p>
-          <h1>首尾帧视频生成控制台</h1>
-          <p class="lead">上传首尾帧，配置火山视频模型，自动创建任务、轮询状态并下载结果到本地。</p>
+        <div class="brand-hero">
+          <img class="brand-logo" src="/ai-rider-logo.png" alt="AI-Rider" />
+          <div>
+            <p class="eyebrow">AI-Rider</p>
+            <h1 data-i18n="appTitle">AI-Rider｜首尾帧生成视频工具</h1>
+            <p class="lead" data-i18n="lead">上传首尾帧，配置火山视频模型，自动创建任务、轮询状态并下载结果到本地。</p>
+          </div>
+        </div>
+        <div class="compact-title" aria-hidden="true">
+          <img class="compact-title-logo" src="/ai-rider-logo.png" alt="" />
+          <span class="compact-title-text" data-i18n="appTitle">AI-Rider｜首尾帧生成视频工具</span>
         </div>
         <div class="hero-actions">
-          <button id="themeToggle" class="ghost" type="button">切换浅色</button>
+          <div class="hero-controls">
+            <button id="openDownloadsBtn" class="ghost" type="button" data-i18n="openDownloads">打开下载目录</button>
+            <div class="header-stats" id="headerStats">
+              <span class="header-stat"><strong id="jobCountTotal">0</strong><em data-i18n="statTotal">总数</em></span>
+              <span class="header-stat"><strong id="jobCountRunning">0</strong><em data-i18n="statRunning">进行中</em></span>
+              <span class="header-stat"><strong id="jobCountDone">0</strong><em data-i18n="statDone">完成</em></span>
+              <span class="header-stat"><strong id="jobCountError">0</strong><em data-i18n="statError">异常</em></span>
+            </div>
+            <button id="langToggle" class="ghost" type="button">EN</button>
+            <button id="themeToggle" class="ghost" type="button">切换浅色</button>
+          </div>
           <div class="hero-note">
-            <span>下载目录</span>
-            <strong>/Users/silence/Documents/volcengine-video-studio/downloads</strong>
+            <span data-i18n="downloadDir">下载目录</span>
+            <strong>/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端/downloads</strong>
           </div>
         </div>
       </header>
@@ -27,17 +45,17 @@
         <section class="panel form-panel">
           <form id="job-form">
             <div class="section-head">
-              <h2>生成配置</h2>
-              <button id="saveSettingsBtn" class="ghost" type="button">保存配置</button>
+              <h2 data-i18n="generationConfig">生成配置</h2>
+              <button id="saveSettingsBtn" class="ghost" type="button" data-i18n="saveSettings">保存配置</button>
             </div>
 
             <div class="grid two">
               <label>
                 <span>API Key</span>
-                <input id="apiKey" name="apiKey" type="password" placeholder="输入一次后可保存" required />
+                <input id="apiKey" name="apiKey" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="输入一次后可保存" required />
               </label>
               <label>
-                <span>模型</span>
+                <span data-i18n="model">模型</span>
                 <select id="model" name="model" required></select>
               </label>
             </div>
@@ -46,15 +64,15 @@
 
             <div class="grid two">
               <label>
-                <span>生成模式</span>
+                <span data-i18n="generationMode">生成模式</span>
                 <div class="mode-switch" id="generationModeSwitch">
-                  <button type="button" class="mode-option active" data-mode="single">单镜头模式</button>
-                  <button type="button" class="mode-option" data-mode="multi">多镜头模式</button>
+                  <button type="button" class="mode-option active" data-mode="single" data-i18n="singleMode">单镜头模式</button>
+                  <button type="button" class="mode-option" data-mode="multi" data-i18n="multiMode">多镜头模式</button>
                 </div>
                 <input id="generationMode" name="generationMode" type="hidden" value="single" />
               </label>
               <label id="multiShotCountField" hidden>
-                <span>镜头数量</span>
+                <span data-i18n="shotCount">镜头数量</span>
                 <select id="multiShotCount" name="multiShotCount">
                   <option value="1">1</option>
                   <option value="2" selected>2</option>
@@ -72,23 +90,23 @@
 
             <div class="grid two">
               <label>
-                <span>项目目录</span>
+                <span data-i18n="projectFolder">项目目录</span>
                 <div class="picker-row">
-                  <button id="projectFolderBtn" class="ghost" type="button">选择项目目录</button>
-                  <input id="projectPath" name="projectPath" type="text" placeholder="未选择目录" readonly />
+                  <button id="projectFolderBtn" class="ghost" type="button" data-i18n="chooseProjectFolder">选择项目目录</button>
+                  <input id="projectPath" name="projectPath" type="text" data-i18n-placeholder="noFolder" placeholder="未选择目录" readonly />
                 </div>
                 <input id="projectFolderFallback" type="file" webkitdirectory directory multiple hidden />
               </label>
               <label>
-                <span>视频名称</span>
-                <input id="videoName" name="videoName" type="text" list="videoNameSuggestions" placeholder="例如：视频 1" />
+                <span data-i18n="videoName">视频名称</span>
+                <input id="videoName" name="videoName" type="text" list="videoNameSuggestions" data-i18n-placeholder="videoNamePlaceholder" placeholder="例如：视频 1" />
                 <datalist id="videoNameSuggestions"></datalist>
               </label>
             </div>
 
             <div class="grid five">
               <label>
-                <span>视频比例</span>
+                <span data-i18n="ratio">视频比例</span>
                 <select id="ratio" name="ratio">
                   <option value="21:9">21:9</option>
                   <option value="16:9" selected>16:9</option>
@@ -97,7 +115,7 @@
                 </select>
               </label>
               <label>
-                <span>分辨率</span>
+                <span data-i18n="resolution">分辨率</span>
                 <select id="resolution" name="resolution">
                   <option value="720p">720p</option>
                   <option value="1080p" selected>1080p</option>
@@ -107,32 +125,32 @@
                 <span>FPS</span>
                 <select id="fps" name="fps">
                   <option value="12">12</option>
-                  <option value="24" selected>24</option>
+                  <option value="24">24</option>
                   <option value="25">25</option>
-                  <option value="30">30</option>
+                  <option value="30" selected>30</option>
                 </select>
               </label>
             </div>
 
             <div class="grid four">
               <label>
-                <span>轮询间隔（毫秒）</span>
+                <span data-i18n="pollInterval">轮询间隔（毫秒）</span>
                 <input id="pollIntervalMs" name="pollIntervalMs" type="number" min="1000" step="1000" value="6000" />
               </label>
               <label>
-                <span>随机种子</span>
-                <input id="seed" name="seed" type="number" placeholder="可选" />
+                <span data-i18n="seed">随机种子</span>
+                <input id="seed" name="seed" type="number" data-i18n-placeholder="optional" placeholder="可选" />
               </label>
               <label class="checkbox">
-                <span>水印</span>
+                <span data-i18n="watermark">水印</span>
                 <input id="watermark" name="watermark" type="checkbox" />
               </label>
               <label class="checkbox">
-                <span>生成音频</span>
+                <span data-i18n="generateAudio">生成音频</span>
                 <input id="generateAudio" name="generateAudio" type="checkbox" />
               </label>
               <label>
-                <span>提交策略</span>
+                <span data-i18n="submitStrategy">提交策略</span>
                 <input id="modeSummary" type="text" value="Seedance 1.5 Pro 严格模式" disabled />
               </label>
             </div>
@@ -140,32 +158,34 @@
             <section id="singleModeFields">
               <div class="grid two">
                 <label>
-                  <span>镜头编号</span>
-                  <input id="shotNumber" name="shotNumber" type="text" placeholder="例如：1" />
+                  <span data-i18n="shotNumber">镜头编号</span>
+                  <input id="shotNumber" name="shotNumber" type="text" data-i18n-placeholder="shotNumberPlaceholder" placeholder="例如：1" />
                 </label>
                 <label>
-                  <span>时长（秒）</span>
-                  <input id="duration" name="duration" type="number" min="1" max="30" value="4" />
+                  <span data-i18n="duration">时长（秒）</span>
+                  <input id="duration" name="duration" type="number" min="4" max="30" value="4" />
                 </label>
               </div>
 
               <label class="prompt-card">
-                <span>提示词</span>
+                <span data-i18n="prompt">提示词</span>
                 <textarea
                   id="prompt"
                   name="prompt"
                   rows="6"
+                  data-i18n-placeholder="singlePromptPlaceholder"
                   placeholder="在这里明确描述镜头运动、节奏、风格、镜头语言和终态。"
                 ></textarea>
+                <div class="prompt-presets" data-preset-target="prompt"></div>
               </label>
 
               <div class="grid two">
                 <label>
-                  <span>首帧图片</span>
+                  <span data-i18n="firstFrame">首帧图片</span>
                   <input id="firstFrame" name="firstFrame" type="file" accept="image/*" />
                 </label>
                 <label>
-                  <span>尾帧图片</span>
+                  <span data-i18n="lastFrame">尾帧图片</span>
                   <input id="lastFrame" name="lastFrame" type="file" accept="image/*" />
                 </label>
               </div>
@@ -173,27 +193,31 @@
 
             <section id="multiModeFields" hidden>
               <div class="multi-mode-head">
-                <h3>多镜头配置</h3>
-                <p>每个镜头独立设置首尾帧、时长和提示词；系统会自动在相邻镜头间插入 4 秒转场视频。</p>
+                <h3 data-i18n="multiShotConfig">多镜头配置</h3>
+                <p data-i18n="multiShotHelp">每个镜头独立设置首尾帧、时长和提示词；系统会自动在相邻镜头间插入 4 秒转场视频。</p>
               </div>
               <div id="multiShotsContainer" class="multi-shots"></div>
             </section>
 
-            <label>
-              <span>额外参数 JSON</span>
-              <textarea
-                id="extraParams"
-                name="extraParams"
-                rows="5"
-                placeholder='例如：{"return_last_frame": true}'
-              ></textarea>
-            </label>
+            <details class="advanced-panel collapsed-panel">
+              <summary data-i18n="extraParams">额外参数 JSON</summary>
+              <label class="advanced-field">
+                <span data-i18n="extraParamsHelp">用于透传账号或模型特有字段</span>
+                <textarea
+                  id="extraParams"
+                  name="extraParams"
+                  rows="5"
+                  data-i18n-placeholder="extraParamsPlaceholder"
+                  placeholder='例如：{"return_last_frame": true}'
+                ></textarea>
+              </label>
+            </details>
 
             <details class="advanced-panel">
-              <summary>高级配置</summary>
+              <summary data-i18n="advancedConfig">高级配置</summary>
               <div class="grid two advanced-grid">
                 <label>
-                  <span>创建任务接口</span>
+                  <span data-i18n="createEndpoint">创建任务接口</span>
                   <input
                     id="createEndpoint"
                     name="createEndpoint"
@@ -203,7 +227,7 @@
                   />
                 </label>
                 <label>
-                  <span>查询任务接口模板</span>
+                  <span data-i18n="queryEndpoint">查询任务接口模板</span>
                   <input
                     id="queryEndpointTemplate"
                     name="queryEndpointTemplate"
@@ -224,8 +248,8 @@
 
         <aside class="panel jobs-panel">
           <div class="section-head">
-            <h2>任务状态</h2>
-            <button id="refreshBtn" class="ghost" type="button">刷新</button>
+            <h2 data-i18n="jobStatus">任务状态</h2>
+            <button id="refreshBtn" class="ghost" type="button" data-i18n="refresh">刷新</button>
           </div>
           <div id="jobs" class="jobs"></div>
         </aside>
@@ -255,7 +279,7 @@
           <div class="job-links"></div>
           <div class="job-error-actions"></div>
           <details class="job-raw">
-            <summary>查看原始返回</summary>
+            <summary data-i18n="viewRaw">查看原始返回</summary>
             <pre class="job-json"></pre>
           </details>
         </div>
@@ -270,27 +294,28 @@
         </div>
         <div class="grid two">
           <label>
-            <span>首帧图片</span>
+            <span data-i18n="firstFrame">首帧图片</span>
             <input class="multi-first-frame" type="file" accept="image/*" />
           </label>
           <label>
-            <span>尾帧图片</span>
+            <span data-i18n="lastFrame">尾帧图片</span>
             <input class="multi-last-frame" type="file" accept="image/*" />
           </label>
         </div>
         <div class="grid two">
           <label>
-            <span>时长（秒）</span>
-            <input class="multi-duration" type="number" min="1" max="30" value="4" />
+            <span data-i18n="duration">时长（秒）</span>
+            <input class="multi-duration" type="number" min="4" max="30" value="4" />
           </label>
           <label>
-            <span>镜头编号</span>
+            <span data-i18n="shotNumber">镜头编号</span>
             <input class="multi-shot-number" type="text" readonly />
           </label>
         </div>
         <label class="prompt-card">
-          <span>提示词</span>
-          <textarea class="multi-prompt" rows="5" placeholder="描述这个镜头的运动、风格与节奏。"></textarea>
+          <span data-i18n="prompt">提示词</span>
+          <textarea class="multi-prompt" rows="5" data-i18n-placeholder="multiPromptPlaceholder" placeholder="描述这个镜头的运动、风格与节奏。"></textarea>
+          <div class="prompt-presets"></div>
         </label>
       </article>
     </template>

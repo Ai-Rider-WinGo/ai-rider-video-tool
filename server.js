@@ -13,6 +13,7 @@ const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DOWNLOAD_DIR = path.join(ROOT_DIR, "downloads");
 const SETTINGS_FILE = path.join(ROOT_DIR, "settings.json");
 const JOBS_FILE = path.join(ROOT_DIR, "jobs.json");
+const MIN_DURATION_SECONDS = 4;
 
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 
@@ -323,7 +324,7 @@ function buildCreatePayload(input) {
   };
 
   if (input.resolution) payload.resolution = input.resolution;
-  if (input.duration) payload.duration = Number(input.duration);
+  if (input.duration) payload.duration = Math.max(MIN_DURATION_SECONDS, Number(input.duration));
   if (input.fps) payload.fps = Number(input.fps);
   if (input.ratio) payload.ratio = input.ratio;
   if (typeof input.watermark === "boolean") payload.watermark = input.watermark;
@@ -514,6 +515,15 @@ async function removeAiBadgeFromVideo(filePath) {
   ]);
 
   await fs.promises.rename(tempPath, filePath);
+}
+
+async function openDirectoryInSystem(targetPath) {
+  const command = process.platform === "win32"
+    ? "explorer"
+    : process.platform === "darwin"
+      ? "open"
+      : "xdg-open";
+  await execFileAsync(command, [targetPath]);
 }
 
 async function pollJob(job, apiKeyOverride) {
@@ -715,6 +725,10 @@ const server = http.createServer(async (req, res) => {
     return sendFile(req, res, path.join(PUBLIC_DIR, "app.js"), "application/javascript; charset=utf-8");
   }
 
+  if ((req.method === "GET" || req.method === "HEAD") && pathname === "/ai-rider-logo.png") {
+    return sendFile(req, res, path.join(PUBLIC_DIR, "ai-rider-logo.png"), "image/png");
+  }
+
   if (req.method === "GET" && pathname === "/api/jobs") {
     const list = Array.from(jobs.values())
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -727,7 +741,7 @@ const server = http.createServer(async (req, res) => {
       models: MODEL_CAPABILITIES,
       defaults: {
         model: "doubao-seedance-1-5-pro-251215",
-        fps: 24,
+        fps: 30,
         ratio: "16:9",
         resolution: "1080p",
         pollIntervalMs: 6000,
@@ -738,6 +752,15 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && pathname === "/api/settings") {
     return sendJson(res, 200, readSettings());
+  }
+
+  if (req.method === "POST" && pathname === "/api/system/open-downloads") {
+    try {
+      await openDirectoryInSystem(DOWNLOAD_DIR);
+      return sendJson(res, 200, { ok: true, path: DOWNLOAD_DIR });
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message });
+    }
   }
 
   if (req.method === "POST" && pathname === "/api/settings") {
@@ -801,5 +824,5 @@ for (const job of jobs.values()) {
 }
 
 server.listen(PORT, HOST, () => {
-  console.log(`Volcengine Video Studio running at http://${HOST}:${PORT}`);
+  console.log(`AI-Rider running at http://${HOST}:${PORT}`);
 });
