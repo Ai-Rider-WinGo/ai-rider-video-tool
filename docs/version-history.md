@@ -1,4 +1,6 @@
-# AI-Rider Version History
+# AI-Rider 版本历史
+
+**中文** | [English](./version-history.en.md)
 
 ## 1.x 系列
 
@@ -58,5 +60,5 @@
 
 ## 2.0.0
 
-- In planning
-- Recommended next step: define feature scope, module boundaries, and milestone order
+- 规划中
+- 下一步建议：明确功能边界、模块拆分和里程碑顺序

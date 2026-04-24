@@ -1,8 +1,8 @@
 # AI-Rider Desktop Environment Setup
 
-**中文** | [English](./desktop-environment.en.md)
+[中文](./desktop-environment.md) | **English**
 
-AI-Rider｜首尾帧生成视频工具 is being migrated from a local Web console to an Electron desktop app.
+AI-Rider is being migrated from a local web console into an Electron desktop app.
 
 ## Required tools
 
@@ -11,7 +11,7 @@ AI-Rider｜首尾帧生成视频工具 is being migrated from a local Web consol
 - Git
 - ffmpeg and ffprobe
 
-On macOS, install the media tools with Homebrew:
+Install the media tools on macOS with Homebrew:
 
 ```bash
 brew install ffmpeg
@@ -24,7 +24,7 @@ cd '/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端'
 npm run setup:desktop
 ```
 
-This command uses a faster Electron mirror by default. If the mirror is not needed, plain `npm install` also works. Installation runs the environment check automatically.
+This command installs project dependencies and runs the environment check.
 
 ## Check the environment manually
 
@@ -32,7 +32,7 @@ This command uses a faster Electron mirror by default. If the mirror is not need
 npm run check:env
 ```
 
-## Start the existing Web service
+## Start the web service
 
 ```bash
 npm run start:web
@@ -52,10 +52,10 @@ npm run start:desktop
 
 The desktop app starts the local service automatically and opens it in an Electron window.
 
-## Build a macOS desktop package
+## Build a macOS package
 
 ```bash
 npm run build:mac
 ```
 
-Build output is written to `release/`.
+Build output goes to `release/`.

@@ -1,28 +1,32 @@
-# AI-Rider｜首尾帧生成视频工具
+# AI-Rider | First-to-Last Frame Video Tool
 
-一个面向桌面端的首尾帧视频生成工具，用来做“首帧 + 尾帧 + 提示词”的火山引擎视频生成。
+[中文](./README.zh-CN.md) | **English**
 
-当前稳定版本：`1.1.3`
+AI-Rider Video Tool is a desktop-first video generation tool built around the "first frame + last frame + prompt" workflow.
 
-版本档案：
+Current stable version: `1.1.3`
 
-- [版本历史](/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端/docs/version-history.md)
-- [1.x 版本档案](/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端/docs/versions/1.0.0.md)
+## Documentation
 
-## 功能
+- [Version History](./docs/version-history.en.md)
+- [1.x Release Archive](./docs/versions/1.x.en.md)
+- [Desktop Environment Setup](./docs/desktop-environment.en.md)
+- [Desktop App Roadmap](./docs/desktop-app-roadmap.en.md)
 
-- 配置 API Key、模型、创建接口、查询接口模板
-- 配置比例、分辨率、时长、FPS、水印、随机种子
-- 支持额外 JSON 参数透传，方便兼容不同账号/模型字段
-- 前端上传首帧和尾帧
-- 后端创建任务并自动轮询
-- 展示状态、任务 ID、进度、原始返回
-- 成功后自动下载视频到本地 `downloads/`
-- 下载文件名基于提示词内容生成
+## Features
 
-## 启动
+- Configure API key, model, task creation endpoint, and polling endpoint template
+- Configure aspect ratio, resolution, duration, FPS, watermark, and seed
+- Pass through extra JSON parameters for account-specific or model-specific fields
+- Upload first frame and last frame in the UI
+- Create jobs on the backend and poll automatically
+- View task status, task ID, progress, and raw responses
+- Download generated videos to local `downloads/`
+- Generate download filenames from prompt content
 
-### 桌面端环境安装
+## Start
+
+### Install desktop dependencies
 
 ```bash
 cd '/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端'
@@ -30,55 +34,53 @@ npm run setup:desktop
 npm run check:env
 ```
 
-需要本机已安装：
+Required local tools:
 
-- Node.js 20 LTS 或更新版本
-- npm 10 或更新版本
+- Node.js 20 LTS or newer
+- npm 10 or newer
 - Git
 - ffmpeg / ffprobe
 
-macOS 可用 Homebrew 安装视频工具：
+Install media tools on macOS with Homebrew:
 
 ```bash
 brew install ffmpeg
 ```
 
-详细说明见：`docs/desktop-environment.md`
-
-### 启动桌面端
+### Start the desktop app
 
 ```bash
 npm run start:desktop
 ```
 
-### 启动 Web 版
+### Start the web app
 
 ```bash
 cd '/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端'
 npm run start:web
 ```
 
-浏览器打开：
+Open:
 
 ```text
 http://127.0.0.1:3100
 ```
 
-## 默认目录
+## Default directories
 
-- 页面：`/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端/public`
-- 下载视频：`/Users/silence/Documents/AI-Rider｜首尾帧视频输出桌面客户端/downloads`
+- UI files: `public/`
+- Downloaded videos: `downloads/`
 
-## 说明
+## Notes
 
-默认接口已预填为：
+Default endpoints are prefilled as:
 
-- 创建：`https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks`
-- 查询：`https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}`
+- Create: `https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks`
+- Query: `https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}`
 
-如果你控制台里的实际接口字段不同，直接在页面里改即可，不需要改代码。
+If your account uses different field names or endpoint templates, update them in the UI without changing code.
 
-`额外参数 JSON` 可以用来补充账号特有字段，例如：
+Example for extra JSON parameters:
 
 ```json
 {
@@ -86,6 +88,4 @@ http://127.0.0.1:3100
 }
 ```
 
-## 注意
-
-当前实现把首帧和尾帧作为两张参考图发送。不同火山模型/账号能力下，尾帧可能被当作强约束终帧，也可能只是额外参考图。如果你确认了你账号下的精确字段名，我可以再帮你把这套页面收敛成严格匹配你那条 API 的正式版。
+The current implementation sends the first frame and the last frame as two reference images. Depending on the exact Volcengine capability enabled on your account, the last frame may work as a hard ending constraint or as an additional reference image.
