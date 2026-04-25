@@ -10,6 +10,7 @@
 
 - [版本历史](./docs/version-history.md)
 - [1.x 版本档案](./docs/versions/1.0.0.md)
+- [1.1.3 发布说明](./docs/releases/1.1.3.md)
 - [桌面端环境说明](./docs/desktop-environment.md)
 - [桌面端路线图](./docs/desktop-app-roadmap.md)
 

@@ -1,0 +1,19 @@
+{
+  "product": "AI-Rider｜首尾帧生成视频工具",
+  "version": "1.1.3",
+  "platform": "macOS",
+  "arch": "arm64",
+  "generatedAt": "2026-04-25T02:04:28.572Z",
+  "artifacts": [
+    {
+      "name": "AI-Rider-Video-1.1.3-arm64.dmg",
+      "size": 118093193,
+      "sha256": "f67c46f64122ca245f09679247be991de978d0499ea8eabd2a80c24811684372"
+    },
+    {
+      "name": "AI-Rider-Video-1.1.3-arm64-mac.zip",
+      "size": 113098915,
+      "sha256": "0c4e5f45673aee3b279e4d648c6da49b76518b40bf7332ccb557b070d4d6838e"
+    }
+  ]
+}

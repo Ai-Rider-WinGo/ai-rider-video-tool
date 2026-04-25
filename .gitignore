@@ -21,3 +21,7 @@ downloads/
 # Local browser automation artifacts
 .playwright-cli/
 output/.DS_Store
+output/releases/**/*.dmg
+output/releases/**/*.zip
+output/releases/**/*.blockmap
+output/releases/**/latest-mac.yml

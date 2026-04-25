@@ -10,6 +10,7 @@ Current stable version: `1.1.3`
 
 - [Version History](./docs/version-history.en.md)
 - [1.x Release Archive](./docs/versions/1.x.en.md)
+- [1.1.3 Release Notes](./docs/releases/1.1.3.en.md)
 - [Desktop Environment Setup](./docs/desktop-environment.en.md)
 - [Desktop App Roadmap](./docs/desktop-app-roadmap.en.md)
 
