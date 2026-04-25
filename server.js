@@ -10,11 +10,17 @@ const HOST = "127.0.0.1";
 const PORT = Number(process.env.PORT || 3100);
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
-const DOWNLOAD_DIR = path.join(ROOT_DIR, "downloads");
-const SETTINGS_FILE = path.join(ROOT_DIR, "settings.json");
-const JOBS_FILE = path.join(ROOT_DIR, "jobs.json");
+const DATA_DIR = process.env.AI_RIDER_DATA_DIR
+  ? path.resolve(process.env.AI_RIDER_DATA_DIR)
+  : ROOT_DIR;
+const DOWNLOAD_DIR = process.env.AI_RIDER_DOWNLOAD_DIR
+  ? path.resolve(process.env.AI_RIDER_DOWNLOAD_DIR)
+  : path.join(ROOT_DIR, "downloads");
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
+const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
 const MIN_DURATION_SECONDS = 4;
 
+fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 
 const jobs = new Map();
@@ -746,6 +752,10 @@ const server = http.createServer(async (req, res) => {
         resolution: "1080p",
         pollIntervalMs: 6000,
         generateAudio: false,
+      },
+      paths: {
+        dataDir: DATA_DIR,
+        downloadDir: DOWNLOAD_DIR,
       },
     });
   }

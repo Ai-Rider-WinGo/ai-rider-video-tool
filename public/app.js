@@ -13,6 +13,7 @@ const themeToggle = document.getElementById("themeToggle");
 const langToggle = document.getElementById("langToggle");
 const modelSelect = document.getElementById("model");
 const modelTip = document.getElementById("modelTip");
+const downloadDirPath = document.getElementById("downloadDirPath");
 const videoNameSuggestions = document.getElementById("videoNameSuggestions");
 const projectFolderBtn = document.getElementById("projectFolderBtn");
 const openDownloadsBtn = document.getElementById("openDownloadsBtn");
@@ -715,6 +716,9 @@ async function loadMeta() {
 
   if (!modelSelect.value && meta.defaults?.model) {
     modelSelect.value = meta.defaults.model;
+  }
+  if (downloadDirPath) {
+    downloadDirPath.textContent = meta.paths?.downloadDir || "-";
   }
   updateModelTip();
 }

@@ -36,6 +36,10 @@ async function findAvailablePort(startPort) {
 }
 
 function startLocalService() {
+  const userDataDir = app.getPath("userData");
+  const defaultDownloadsDir = app.getPath("downloads");
+  process.env.AI_RIDER_DATA_DIR = userDataDir;
+  process.env.AI_RIDER_DOWNLOAD_DIR = path.join(defaultDownloadsDir, "AI-Rider");
   require(path.join(__dirname, "..", "server.js"));
 }
 
