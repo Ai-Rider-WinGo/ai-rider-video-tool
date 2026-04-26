@@ -4,6 +4,7 @@ const path = require("path");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
 const { URL } = require("url");
+const { getCompatibleModel, getDefaultModelId, getRegistryMeta } = require("./lib/model-registry");
 const execFileAsync = promisify(execFile);
 
 const HOST = "127.0.0.1";
@@ -19,39 +20,15 @@ const DOWNLOAD_DIR = process.env.AI_RIDER_DOWNLOAD_DIR
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
 const MIN_DURATION_SECONDS = 4;
+const PRODUCT_VERSION = "2.1.0";
+const PRODUCT_VERSION_LABEL = "2.1.0 Product Workbench Upgrade";
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 
 const jobs = new Map();
 const jobTimers = new Map();
-const MODEL_CAPABILITIES = {
-  "doubao-seedance-1-0-pro-250528": {
-    label: "Seedance 1.0 Pro",
-    supports: ["t2v", "i2v_first_frame"],
-  },
-  "doubao-seedance-1-0-lite-i2v-250428": {
-    label: "Seedance 1.0 Lite I2V",
-    supports: ["i2v_first_frame"],
-  },
-  "doubao-seedance-1-0-pro-fast-251015": {
-    label: "Seedance 1.0 Pro Fast",
-    supports: ["t2v", "i2v_first_frame"],
-  },
-  "doubao-seedance-1-0-lite-t2v-250428": {
-    label: "Seedance 1.0 Lite T2V",
-    supports: ["t2v"],
-  },
-  "doubao-seedance-1-5-pro-251215": {
-    label: "Seedance 1.5 Pro",
-    supports: ["t2v", "i2v_first_frame", "i2v_first_last_frame_experimental"],
-  },
-};
-const FALLBACK_MODELS = {
-  i2v_first_last_frame: "doubao-seedance-1-5-pro-251215",
-  i2v_first_frame: "doubao-seedance-1-0-pro-250528",
-  t2v: "doubao-seedance-1-5-pro-251215",
-};
+const MODEL_REGISTRY_META = getRegistryMeta();
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -128,49 +105,13 @@ function sanitizeFileName(input) {
 }
 
 function inferGenerationMode(input) {
+  if (input.template === "video_extension" || input.referenceVideoDataUrl) return "video_extension";
+  if (input.template === "first_last_frame") return "i2v_first_last_frame";
+  if (input.template === "first_frame") return "i2v_first_frame";
+  if (input.template === "text_to_video") return "t2v";
   if (input.firstFrameDataUrl && input.lastFrameDataUrl) return "i2v_first_last_frame";
   if (input.firstFrameDataUrl) return "i2v_first_frame";
   return "t2v";
-}
-
-function getCompatibleModel(mode, preferredModel) {
-  if (mode === "i2v_first_last_frame" && preferredModel === "doubao-seedance-1-5-pro-251215") {
-    return {
-      requestedModel: preferredModel,
-      effectiveModel: preferredModel,
-      adjusted: false,
-      reason: "",
-    };
-  }
-
-  const preferred = MODEL_CAPABILITIES[preferredModel];
-  if (preferred && preferred.supports.includes(mode)) {
-    return {
-      requestedModel: preferredModel,
-      effectiveModel: preferredModel,
-      adjusted: false,
-      reason: "",
-    };
-  }
-
-  const fallbackModel = FALLBACK_MODELS[mode];
-  if (fallbackModel) {
-    return {
-      requestedModel: preferredModel,
-      effectiveModel: fallbackModel,
-      adjusted: fallbackModel !== preferredModel,
-      reason: fallbackModel === preferredModel
-        ? ""
-        : `模型 ${preferredModel} 不支持当前模式 ${mode}，已自动切换为 ${fallbackModel}。`,
-    };
-  }
-
-  return {
-    requestedModel: preferredModel,
-    effectiveModel: preferredModel,
-    adjusted: false,
-    reason: "",
-  };
 }
 
 function fileExtensionFromUrl(urlString, fallback = ".mp4") {
@@ -319,9 +260,22 @@ function buildCreatePayload(input) {
     });
   }
 
+  if (input.referenceVideoDataUrl) {
+    content.push({
+      type: "video_url",
+      role: "reference_video",
+      video_url: {
+        url: input.referenceVideoDataUrl,
+      },
+    });
+  }
+
   if (mode === "i2v_first_last_frame") {
-    compatibilityNote =
-      "已按 Seedance 首尾帧模式提交：首图使用 role=first_frame，尾图使用 role=last_frame。";
+    compatibilityNote = String(modelChoice.effectiveModel).startsWith("doubao-seedance-2-0")
+      ? "已按 Seedance 2.0 多模态首尾帧方式提交：首图使用 role=first_frame，尾图使用 role=last_frame。请以账号实际开放能力为准。"
+      : "已按 Seedance 首尾帧模式提交：首图使用 role=first_frame，尾图使用 role=last_frame。";
+  } else if (mode === "video_extension") {
+    compatibilityNote = "已按 Seedance 2.0 视频延展实验模板提交：参考视频使用 role=reference_video。该提交流程基于当前模型元数据和现有内容协议做兼容接入，请以账号实际开放能力为准。";
   }
 
   const payload = {
@@ -744,14 +698,25 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && pathname === "/api/meta") {
     return sendJson(res, 200, {
-      models: MODEL_CAPABILITIES,
+      app: {
+        version: PRODUCT_VERSION,
+        versionLabel: PRODUCT_VERSION_LABEL,
+      },
+      registry: {
+        version: MODEL_REGISTRY_META.version,
+        providers: MODEL_REGISTRY_META.providers,
+        modelList: MODEL_REGISTRY_META.modelList,
+      },
+      models: MODEL_REGISTRY_META.models,
       defaults: {
-        model: "doubao-seedance-1-5-pro-251215",
+        model: getDefaultModelId(),
         fps: 30,
         ratio: "16:9",
         resolution: "1080p",
         pollIntervalMs: 6000,
         generateAudio: false,
+        tokenPriceCnyPerK: 0.016,
+        fallbackModels: MODEL_REGISTRY_META.defaults.fallbackModels,
       },
       paths: {
         dataDir: DATA_DIR,

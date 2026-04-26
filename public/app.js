@@ -13,24 +13,89 @@ const themeToggle = document.getElementById("themeToggle");
 const langToggle = document.getElementById("langToggle");
 const modelSelect = document.getElementById("model");
 const modelTip = document.getElementById("modelTip");
+const generationTemplateSelect = document.getElementById("generationTemplate");
+const templateTip = document.getElementById("templateTip");
+const templateCards = document.getElementById("templateCards");
+const currentTemplateTitle = document.getElementById("currentTemplateTitle");
+const currentModelTags = document.getElementById("currentModelTags");
 const downloadDirPath = document.getElementById("downloadDirPath");
+const topModelSummary = document.getElementById("topModelSummary");
+const apiModeBadge = document.getElementById("apiModeBadge");
 const videoNameSuggestions = document.getElementById("videoNameSuggestions");
 const projectFolderBtn = document.getElementById("projectFolderBtn");
 const openDownloadsBtn = document.getElementById("openDownloadsBtn");
 const projectFolderFallback = document.getElementById("projectFolderFallback");
 const generationMode = document.getElementById("generationMode");
-const generationModeSwitch = document.getElementById("generationModeSwitch");
 const multiShotCount = document.getElementById("multiShotCount");
+const multiShotCountMirror = document.getElementById("multiShotCountMirror");
 const multiShotCountField = document.getElementById("multiShotCountField");
 const singleModeFields = document.getElementById("singleModeFields");
 const multiModeFields = document.getElementById("multiModeFields");
+const openMultiShotBtn = document.getElementById("openMultiShotBtn");
+const closeMultiShotBtn = document.getElementById("closeMultiShotBtn");
 const multiShotsContainer = document.getElementById("multiShotsContainer");
 const multiShotTemplate = document.getElementById("multi-shot-template");
+const imageInputGrid = document.getElementById("imageInputGrid");
+const firstFrameField = document.getElementById("firstFrameField");
+const lastFrameField = document.getElementById("lastFrameField");
+const videoInputGrid = document.getElementById("videoInputGrid");
+const requestPreview = document.getElementById("requestPreview");
+const endpointPreview = document.getElementById("endpointPreview");
+
+const TEMPLATE_DEFINITIONS = {
+  first_last_frame: {
+    id: "first_last_frame",
+    mode: "i2v_first_last_frame",
+    labelKey: "templateFirstLastFrame",
+    summaryKey: "templateFirstLastFrameSummary",
+    tipKey: "templateFirstLastFrameTip",
+    recommendedModel: "Seedance 2.0",
+    inputTagKeys: ["inputTagImage", "inputTagImage", "inputTagText"],
+    supportsMulti: true,
+    requires: { prompt: true, firstFrame: true, lastFrame: true, video: false },
+  },
+  first_frame: {
+    id: "first_frame",
+    mode: "i2v_first_frame",
+    labelKey: "templateFirstFrame",
+    summaryKey: "templateFirstFrameSummary",
+    tipKey: "templateFirstFrameTip",
+    recommendedModel: "Seedance 2.0",
+    inputTagKeys: ["inputTagImage", "inputTagText"],
+    supportsMulti: false,
+    requires: { prompt: true, firstFrame: true, lastFrame: false, video: false },
+  },
+  text_to_video: {
+    id: "text_to_video",
+    mode: "t2v",
+    labelKey: "templateTextToVideo",
+    summaryKey: "templateTextToVideoSummary",
+    tipKey: "templateTextToVideoTip",
+    recommendedModel: "Seedance 2.0 Fast",
+    inputTagKeys: ["inputTagText"],
+    supportsMulti: false,
+    requires: { prompt: true, firstFrame: false, lastFrame: false, video: false },
+  },
+  video_extension: {
+    id: "video_extension",
+    mode: "video_extension",
+    labelKey: "templateVideoExtension",
+    summaryKey: "templateVideoExtensionSummary",
+    tipKey: "templateVideoExtensionTip",
+    supportsMulti: false,
+    badgeKey: "templateExperimental",
+    recommendedModel: "Seedance 2.0",
+    inputTagKeys: ["inputTagVideo", "inputTagText"],
+    requires: { prompt: true, firstFrame: false, lastFrame: false, video: true },
+  },
+};
 
 const FIELD_HELP = {
   zh: {
     apiKey: "火山方舟 API Key，用于通过 Bearer Token 调用视频生成任务接口。只保存在本机 settings.json。",
-    model: "视频生成模型 ID。当前工具优先使用已开通的 Seedance 模型，首尾帧能力取决于账号和模型。",
+    model: "视频生成模型 ID。当前工具已接入 Seedance 2.0 / 1.5 / 1.0 系列；具体首尾帧、多模态和音频能力取决于账号和模型开放情况。",
+    template: "生成模板决定当前任务的输入结构。公共配置保持共用，具体输入会根据模板和模型能力动态变化。",
+    templateSummary: "展示当前模板的核心用途与输入摘要。",
     generationMode: "单镜头只提交一条首尾帧任务；多镜头会为每个镜头提交任务，并自动生成相邻镜头的 4 秒转场。",
     multiShotCount: "多镜头模式下要配置的镜头数量。相邻镜头之间会额外生成转场任务。",
     projectPath: "用于标记项目目录。桌面端当前仍以本地下载目录为主，后续会升级为完整项目文件夹管理。",
@@ -42,7 +107,8 @@ const FIELD_HELP = {
     seed: "随机种子。相同提示词、图片和参数下可帮助复现实验结果；留空则由模型随机生成。",
     watermark: "是否请求模型输出带水印的视频。本工具在关闭水印时会尝试对已下载视频做本地去标处理。",
     generateAudio: "是否请求模型同时生成音频。具体可用性取决于模型和账号能力。",
-    modeSummary: "展示当前提交策略。首尾帧模式会保持 Seedance 1.5 Pro 严格提交，不自动降级。",
+    modeSummary: "展示当前提交策略。当前版本优先使用 Seedance 2.0 作为文本、图像和首尾帧生成基线。",
+    tokenPriceCnyPerK: "用于本地费用估算的单价配置，单位是每千 Token 对应的人民币价格。默认值 0.016，可按你的账号实际成本手动调整。",
     shotNumber: "镜头编号，用于区分单镜头、多镜头和自动转场任务。",
     duration: "生成视频时长，当前工具限制最少 4 秒，并在前端和后端同时兜底。",
     prompt: "给模型的文字描述。建议明确镜头运动、主体变化、画面风格、节奏和终态。",
@@ -51,10 +117,13 @@ const FIELD_HELP = {
     extraParams: "透传给火山接口的额外 JSON 字段，用于兼容账号或模型特有能力。",
     createEndpoint: "火山方舟创建视频生成任务的接口地址。",
     queryEndpointTemplate: "火山方舟查询任务状态的接口模板，{task_id} 会替换为创建任务返回的 ID。",
+    referenceVideo: "为后续视频延展、视频编辑等多模态模板预留的视频输入位。",
   },
   en: {
     apiKey: "Volcengine Ark API key, sent as a Bearer token for video generation task calls. Stored locally in settings.json.",
-    model: "Video generation model ID. AI-Rider prioritizes enabled Seedance models; first/last-frame support depends on your account and model.",
+    model: "Video generation model ID. AI-Rider now includes Seedance 2.0 / 1.5 / 1.0 series. First/last-frame, multimodal, and audio support still depend on your account and model access.",
+    template: "The generation template defines the input structure for the current task. Shared settings stay common while specific inputs adapt to template and model capabilities.",
+    templateSummary: "Shows the core purpose and input summary for the current template.",
     generationMode: "Single shot submits one first/last-frame task. Multi-shot submits each shot and creates 4-second transitions between adjacent shots.",
     multiShotCount: "Number of shots to configure in multi-shot mode. Transition tasks are added between neighboring shots.",
     projectPath: "Project folder label. The desktop app currently downloads locally; full project folder management will come later.",
@@ -66,7 +135,8 @@ const FIELD_HELP = {
     seed: "Random seed. Helps reproduce results with the same prompt, images, and parameters; leave empty for random generation.",
     watermark: "Whether to request watermarked output. When disabled, AI-Rider also attempts local badge cleanup after download.",
     generateAudio: "Whether to request generated audio. Availability depends on the selected model and account capability.",
-    modeSummary: "Shows the current submit strategy. First/last-frame mode keeps strict Seedance 1.5 Pro submission.",
+    modeSummary: "Shows the current submit strategy. This build prioritizes Seedance 2.0 as the baseline for text, image, and first/last-frame generation.",
+    tokenPriceCnyPerK: "Local cost-estimation price input, measured in CNY per 1K tokens. The default is 0.016 and can be adjusted to match your actual account pricing.",
     shotNumber: "Shot number used to distinguish single shots, multi-shot entries, and generated transitions.",
     duration: "Output duration. AI-Rider enforces a minimum of 4 seconds in both UI and server payloads.",
     prompt: "Text prompt for the model. Describe camera motion, subject changes, visual style, rhythm, and final state.",
@@ -75,6 +145,7 @@ const FIELD_HELP = {
     extraParams: "Additional JSON fields passed through to the Volcengine API for account or model-specific capabilities.",
     createEndpoint: "Volcengine Ark endpoint for creating a video generation task.",
     queryEndpointTemplate: "Volcengine Ark task status endpoint template. {task_id} is replaced with the returned task ID.",
+    referenceVideo: "Video input reserved for future multimodal templates such as video extension and video editing.",
   },
 };
 
@@ -90,9 +161,12 @@ const I18N = {
     statError: "异常",
     apiKeyPlaceholder: "输入一次后可保存",
     model: "模型",
+    template: "生成模板",
+    templateSummary: "模板说明",
     themeLight: "切换浅色",
     themeDark: "切换深色",
     generationConfig: "生成配置",
+    generationStudio: "视频生成工作台",
     saveSettings: "保存配置",
     generationMode: "生成模式",
     singleMode: "单镜头模式",
@@ -110,8 +184,13 @@ const I18N = {
     optional: "可选",
     watermark: "水印",
     generateAudio: "生成音频",
+    outputSettings: "输出设置",
+    advancedWorkflow: "高级工作流",
+    multiEntryHelp: "默认先走单镜头生成；需要复杂分镜时再进入多镜头编辑。",
+    openMultiShot: "多镜头编辑",
+    backToSingle: "返回单镜头",
     submitStrategy: "提交策略",
-    strictMode: "Seedance 1.5 Pro 严格模式",
+    strictMode: "Seedance 2.0 基线模式",
     multiModeSummary: "多镜头模式",
     shotNumber: "镜头编号",
     shotNumberPlaceholder: "例如：1",
@@ -129,7 +208,9 @@ const I18N = {
     advancedConfig: "高级配置",
     createEndpoint: "创建任务接口",
     queryEndpoint: "查询任务接口模板",
+    tokenPriceCnyPerK: "单价（元 / 千 Token）",
     createTask: "创建生成任务",
+    generateVideo: "生成视频",
     creatingTaskCount: "创建任务（进行中 {count}）",
     jobStatus: "任务状态",
     refresh: "刷新",
@@ -142,11 +223,31 @@ const I18N = {
     promptPresetA: "生成连续转场画面，要求连贯，不掉帧。",
     promptPresetB: "生成连续转场画面，要求绚丽爆炸，不俗气。",
     promptPresetC: "生成连续转场画面，要求平滑连续。",
+    templateFirstLastFrame: "首尾帧生成",
+    templateFirstFrame: "首帧生成",
+    templateTextToVideo: "文生视频",
+    templateVideoExtension: "视频延展",
+    templateExperimental: "实验",
+    inputTagText: "Text",
+    inputTagImage: "Image",
+    inputTagVideo: "Video",
+    inputTagAudio: "Audio",
+    recommendedModel: "推荐模型",
+    templateFirstLastFrameSummary: "首图 + 尾图 + 提示词",
+    templateFirstFrameSummary: "首图 + 提示词",
+    templateTextToVideoSummary: "提示词直出视频",
+    templateVideoExtensionSummary: "参考视频 + 提示词",
+    templateFirstLastFrameTip: "适合做严格可控的起止画面生成，最贴合当前 AI-Rider 主工作流。",
+    templateFirstFrameTip: "适合从单张起始画面生成镜头，不要求明确尾图。",
+    templateTextToVideoTip: "适合快速验证灵感或做纯提示词生成。",
+    templateVideoExtensionTip: "仅对 Seedance 2.0 系列开放。当前按实验方式接入，用于续写或延展已有视频。",
     modelFallbackTip: "请使用火山控制台已开通的视频模型。",
-    modelTipStrict: "{label} 支持：{modes}。你当前要求最低使用 1.5 Pro，因此工具会保持 1.5 Pro 不降级；首尾帧场景下会按官方示例角色提交：first_frame / last_frame。",
-    modelTip: "{label} 支持：{modes}。首尾帧场景下会按 first_frame / last_frame 角色提交。",
+    modelTipStrict: "{label} 支持：{modes}。当前版本会优先保持 Seedance 2.0 作为基线模型；首尾帧场景下会按 first_frame / last_frame 角色提交。",
+    modelTip: "{label} 支持：{modes}。当前场景会按模型能力映射自动选择兼容提交流程。",
     durationError: "生成时长最少为 4 秒。",
     missingFrames: "请先选择首帧和尾帧图片。",
+    missingFirstFrame: "请先选择首帧图片。",
+    missingReferenceVideo: "请先选择参考视频。",
     missingPrompt: "请填写提示词。",
     missingVideoName: "多镜头模式请先填写视频名称。",
     missingShot: "请完整填写镜头 {number} 的首帧、尾帧和提示词。",
@@ -181,9 +282,12 @@ const I18N = {
     statError: "Error",
     apiKeyPlaceholder: "Saved after first entry",
     model: "Model",
+    template: "Template",
+    templateSummary: "Template summary",
     themeLight: "Light",
     themeDark: "Dark",
     generationConfig: "Generation",
+    generationStudio: "Video Workbench",
     saveSettings: "Save",
     generationMode: "Generation mode",
     singleMode: "Single shot",
@@ -201,8 +305,13 @@ const I18N = {
     optional: "Optional",
     watermark: "Watermark",
     generateAudio: "Generate audio",
+    outputSettings: "Output settings",
+    advancedWorkflow: "Advanced workflow",
+    multiEntryHelp: "Stay on the default single-shot flow unless you need storyboard-level editing.",
+    openMultiShot: "Open multi-shot editor",
+    backToSingle: "Back to single shot",
     submitStrategy: "Submit strategy",
-    strictMode: "Seedance 1.5 Pro strict mode",
+    strictMode: "Seedance 2.0 baseline mode",
     multiModeSummary: "Multi-shot mode",
     shotNumber: "Shot number",
     shotNumberPlaceholder: "e.g. 1",
@@ -220,7 +329,9 @@ const I18N = {
     advancedConfig: "Advanced",
     createEndpoint: "Create task endpoint",
     queryEndpoint: "Query task endpoint template",
+    tokenPriceCnyPerK: "Price (CNY / 1K tokens)",
     createTask: "Create task",
+    generateVideo: "Generate video",
     creatingTaskCount: "Creating ({count})",
     jobStatus: "Task status",
     refresh: "Refresh",
@@ -233,11 +344,31 @@ const I18N = {
     promptPresetA: "Generate continuous transition footage that is coherent and does not drop frames.",
     promptPresetB: "Generate continuous transition footage that is dazzling and explosive, but not tacky.",
     promptPresetC: "Generate continuous transition footage that is smooth and continuous.",
+    templateFirstLastFrame: "First + Last Frame",
+    templateFirstFrame: "First Frame",
+    templateTextToVideo: "Text to Video",
+    templateVideoExtension: "Video Extension",
+    templateExperimental: "Experimental",
+    inputTagText: "Text",
+    inputTagImage: "Image",
+    inputTagVideo: "Video",
+    inputTagAudio: "Audio",
+    recommendedModel: "Recommended",
+    templateFirstLastFrameSummary: "First frame + last frame + prompt",
+    templateFirstFrameSummary: "First frame + prompt",
+    templateTextToVideoSummary: "Prompt-only video generation",
+    templateVideoExtensionSummary: "Reference video + prompt",
+    templateFirstLastFrameTip: "Best for tightly controlled start/end shots and closest to the current AI-Rider core workflow.",
+    templateFirstFrameTip: "Best for generating a shot from one starting frame without a fixed ending frame.",
+    templateTextToVideoTip: "Best for quick ideation and prompt-only generation.",
+    templateVideoExtensionTip: "Available only for Seedance 2.0 models. Currently wired as an experimental flow for continuing or extending an existing video.",
     modelFallbackTip: "Use a video model enabled in your Volcengine console.",
-    modelTipStrict: "{label} supports: {modes}. The tool keeps 1.5 Pro as the minimum model and submits first/last-frame jobs with first_frame / last_frame roles.",
-    modelTip: "{label} supports: {modes}. First/last-frame jobs use first_frame / last_frame roles.",
+    modelTipStrict: "{label} supports: {modes}. This build keeps Seedance 2.0 as the baseline model and submits first/last-frame jobs with first_frame / last_frame roles.",
+    modelTip: "{label} supports: {modes}. The current flow maps the request to a compatible model-specific submission path.",
     durationError: "Duration must be at least 4 seconds.",
     missingFrames: "Select first and last frame images first.",
+    missingFirstFrame: "Select the first frame image first.",
+    missingReferenceVideo: "Select the reference video first.",
     missingPrompt: "Enter a prompt.",
     missingVideoName: "Enter a video name before using multi-shot mode.",
     missingShot: "Complete first frame, last frame, and prompt for shot {number}.",
@@ -288,6 +419,24 @@ function normalizeDuration(value) {
   return Math.max(MIN_DURATION_SECONDS, parsed);
 }
 
+function getSelectedTemplateId() {
+  return generationTemplateSelect.value || "first_last_frame";
+}
+
+function getSelectedTemplate() {
+  return TEMPLATE_DEFINITIONS[getSelectedTemplateId()] || TEMPLATE_DEFINITIONS.first_last_frame;
+}
+
+function modelSupportsTemplate(model, template) {
+  if (!model || !template) return false;
+  return (model.supports || []).includes(template.mode)
+    || (template.mode === "i2v_first_last_frame" && (model.supports || []).includes("i2v_first_last_frame_experimental"));
+}
+
+function getSupportedTemplatesForModel(model) {
+  return Object.values(TEMPLATE_DEFINITIONS).filter((template) => modelSupportsTemplate(model, template));
+}
+
 function applyI18n(root = document) {
   document.documentElement.lang = currentLanguage === "zh" ? "zh-CN" : "en";
   document.title = t("appTitle");
@@ -306,6 +455,8 @@ function applyI18n(root = document) {
   renderPromptPresets(root);
   applyHelpTooltips(root);
   updateSubmitButtonState();
+  updateStatusSurface();
+  updateAdvancedPreview();
 }
 
 function getHelpText(key) {
@@ -368,7 +519,7 @@ function renderPromptPresets(root = document) {
 function updateSubmitButtonState() {
   submitBtn.textContent = pendingSubmissions > 0
     ? t("creatingTaskCount", { count: pendingSubmissions })
-    : t("createTask");
+    : t("generateVideo");
 }
 
 function getGenerationMode() {
@@ -377,9 +528,9 @@ function getGenerationMode() {
 
 function setGenerationMode(mode) {
   generationMode.value = mode;
-  generationModeSwitch.querySelectorAll(".mode-option").forEach((button) => {
-    button.classList.toggle("active", button.dataset.mode === mode);
-  });
+  if (openMultiShotBtn) {
+    openMultiShotBtn.disabled = mode === "multi";
+  }
   updateGenerationModeUI();
 }
 
@@ -414,12 +565,139 @@ function updateMultiShotLabels() {
 function updateGenerationModeUI() {
   const mode = getGenerationMode();
   const isMulti = mode === "multi";
-  multiShotCountField.hidden = !isMulti;
+  const template = getSelectedTemplate();
+  if (isMulti && !template.supportsMulti) {
+    setGenerationMode("single");
+    return;
+  }
+  multiShotCountField.hidden = true;
   multiModeFields.hidden = !isMulti;
   singleModeFields.hidden = isMulti;
-  $("modeSummary").value = isMulti ? t("multiModeSummary") : t("strictMode");
+  const current = meta.models?.[modelSelect.value];
+  $("modeSummary").value = isMulti ? t("multiModeSummary") : (current?.label || t("strictMode"));
   if (isMulti && !multiShotsContainer.children.length) {
     renderMultiShots();
+  }
+  if (multiShotCountMirror) {
+    multiShotCountMirror.value = multiShotCount.value;
+  }
+  updateAdvancedPreview();
+}
+
+function refreshTemplateOptions() {
+  const currentModel = meta.models?.[modelSelect.value];
+  const supportedTemplates = getSupportedTemplatesForModel(currentModel);
+  const previousValue = getSelectedTemplateId();
+  generationTemplateSelect.innerHTML = "";
+
+  for (const template of supportedTemplates) {
+    const option = document.createElement("option");
+    option.value = template.id;
+    option.textContent = t(template.labelKey);
+    generationTemplateSelect.appendChild(option);
+  }
+
+  if (supportedTemplates.some((template) => template.id === previousValue)) {
+    generationTemplateSelect.value = previousValue;
+  } else if (supportedTemplates[0]) {
+    generationTemplateSelect.value = supportedTemplates[0].id;
+  }
+
+  updateTemplateUI();
+}
+
+function updateTemplateUI() {
+  const template = getSelectedTemplate();
+  if ($("templateSummary")) $("templateSummary").value = t(template.summaryKey);
+  templateTip.textContent = t(template.tipKey);
+  if (currentTemplateTitle) currentTemplateTitle.textContent = t(template.labelKey);
+  renderTemplateCards();
+
+  firstFrameField.hidden = !template.requires.firstFrame;
+  lastFrameField.hidden = !template.requires.lastFrame;
+  imageInputGrid.hidden = !template.requires.firstFrame && !template.requires.lastFrame;
+  videoInputGrid.hidden = !template.requires.video;
+
+  if (openMultiShotBtn) {
+    openMultiShotBtn.hidden = !template.supportsMulti;
+  }
+  if (!template.supportsMulti && getGenerationMode() === "multi") {
+    generationMode.value = "single";
+  }
+
+  renderCurrentModelTags();
+  updateGenerationModeUI();
+  updateAdvancedPreview();
+}
+
+function renderTemplateCards() {
+  const currentModel = meta.models?.[modelSelect.value];
+  const supportedTemplates = getSupportedTemplatesForModel(currentModel);
+  templateCards.innerHTML = "";
+
+  for (const template of supportedTemplates) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `template-card${template.id === getSelectedTemplateId() ? " active" : ""}`;
+    button.dataset.templateId = template.id;
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", String(template.id === getSelectedTemplateId()));
+
+    const title = document.createElement("div");
+    title.className = "template-card-title";
+    title.textContent = t(template.labelKey);
+    button.appendChild(title);
+
+    const summary = document.createElement("div");
+    summary.className = "template-card-summary";
+    summary.textContent = t(template.summaryKey);
+    button.appendChild(summary);
+
+    const tags = document.createElement("div");
+    tags.className = "template-card-tags";
+    for (const key of template.inputTagKeys || []) {
+      const tag = document.createElement("span");
+      tag.className = "template-input-tag";
+      tag.textContent = t(key);
+      tags.appendChild(tag);
+    }
+    button.appendChild(tags);
+
+    const foot = document.createElement("div");
+    foot.className = "template-card-foot";
+    const recommended = document.createElement("span");
+    recommended.className = "template-card-recommended";
+    recommended.textContent = `${t("recommendedModel")} ${template.recommendedModel}`;
+    foot.appendChild(recommended);
+
+    if (template.badgeKey) {
+      const badge = document.createElement("span");
+      badge.className = "template-card-badge";
+      badge.textContent = t(template.badgeKey);
+      foot.appendChild(badge);
+    }
+
+    button.appendChild(foot);
+
+    button.addEventListener("click", () => {
+      generationTemplateSelect.value = template.id;
+      updateTemplateUI();
+    });
+
+    templateCards.appendChild(button);
+  }
+}
+
+function renderCurrentModelTags() {
+  if (!currentModelTags) return;
+  const current = meta.models?.[modelSelect.value];
+  currentModelTags.innerHTML = "";
+  const labels = current?.modeLabels || [];
+  for (const label of labels.slice(0, 4)) {
+    const chip = document.createElement("span");
+    chip.className = "model-capability-tag";
+    chip.textContent = label;
+    currentModelTags.appendChild(chip);
   }
 }
 
@@ -460,6 +738,17 @@ function makeMeta(job) {
     `音频: ${job.config?.generateAudio ? "开启" : "关闭"}`,
   ];
 
+  const usage = job.rawQueryResponse?.usage;
+  if (usage?.total_tokens !== undefined || usage?.completion_tokens !== undefined) {
+    const totalTokens = usage?.total_tokens ?? "-";
+    const completionTokens = usage?.completion_tokens ?? "-";
+    lines.push(`Token 消耗: total=${totalTokens}, completion=${completionTokens}`);
+    const estimatedCost = estimateJobCostCny(job);
+    if (estimatedCost !== null) {
+      lines.push(`费用预估: ¥${estimatedCost.toFixed(4)} (${getTokenPriceLabel(job)})`);
+    }
+  }
+
   if (job.config?.modelAdjustmentReason) {
     lines.push(`模型调整: ${job.config.modelAdjustmentReason}`);
   }
@@ -469,6 +758,27 @@ function makeMeta(job) {
   }
 
   return lines.join("\n");
+}
+
+function getTokenPricePerK(job) {
+  const fromConfig = Number(job?.config?.tokenPriceCnyPerK);
+  if (Number.isFinite(fromConfig) && fromConfig >= 0) return fromConfig;
+
+  const fromSettings = Number($("tokenPriceCnyPerK")?.value);
+  if (Number.isFinite(fromSettings) && fromSettings >= 0) return fromSettings;
+
+  return 0.016;
+}
+
+function estimateJobCostCny(job) {
+  const totalTokens = Number(job?.rawQueryResponse?.usage?.total_tokens);
+  if (!Number.isFinite(totalTokens)) return null;
+  return (totalTokens / 1000) * getTokenPricePerK(job);
+}
+
+function getTokenPriceLabel(job) {
+  const price = getTokenPricePerK(job);
+  return `¥${price.toFixed(3)} / 千 Token`;
 }
 
 function formatProgress(job) {
@@ -484,14 +794,15 @@ function formatProgress(job) {
 }
 
 function makeCompactMeta(job) {
-  return [
-    `视频名称: ${job.videoName || "-"}`,
-    `镜头: ${job.shotNumber || "-"}`,
-    `比例: ${job.config?.ratio || "-"}`,
-    `分辨率: ${job.config?.resolution || "-"}`,
-    `水印: ${job.config?.watermark ? "开启" : "关闭"}`,
-    `最后更新: ${new Date(job.updatedAt).toLocaleString()}`,
-  ].join(" | ");
+  const parts = [
+    { label: "模型", value: job.config?.model || "-" },
+    { label: "进度", value: formatProgress(job) },
+  ];
+  const cost = estimateJobCostCny(job);
+  if (cost !== null) {
+    parts.push({ label: "费用", value: `¥${cost.toFixed(4)}` });
+  }
+  return parts;
 }
 
 function buildLocalMediaUrl(jobId) {
@@ -535,8 +846,14 @@ function renderJobs(jobs) {
     progress.textContent = `进度: ${formatProgress(job)}`;
     const titleParts = [job.videoName || "未命名视频", job.shotNumber ? `镜头 ${job.shotNumber}` : ""].filter(Boolean);
     prompt.textContent = titleParts.join(" | ") || "未填写提示词";
-    time.textContent = badge.textContent;
-    compactMeta.textContent = makeCompactMeta(job);
+    time.textContent = new Date(job.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    compactMeta.innerHTML = "";
+    for (const item of makeCompactMeta(job)) {
+      const chip = document.createElement("span");
+      chip.className = "job-meta-chip";
+      chip.innerHTML = `<em>${item.label}</em><strong>${item.value}</strong>`;
+      compactMeta.appendChild(chip);
+    }
     metaText.textContent = makeMeta(job);
 
     const isOpen = openJobId === job.id;
@@ -648,10 +965,10 @@ function updateJobCounts(jobs = []) {
     }
   }
 
-  $("jobCountTotal").textContent = String(totals.total);
-  $("jobCountRunning").textContent = String(totals.running);
-  $("jobCountDone").textContent = String(totals.done);
-  $("jobCountError").textContent = String(totals.error);
+  if ($("jobCountTotal")) $("jobCountTotal").textContent = String(totals.total);
+  if ($("jobCountRunning")) $("jobCountRunning").textContent = String(totals.running);
+  if ($("jobCountDone")) $("jobCountDone").textContent = String(totals.done);
+  if ($("jobCountError")) $("jobCountError").textContent = String(totals.error);
 }
 
 async function loadJobs() {
@@ -704,7 +1021,10 @@ function applySavedTheme() {
 async function loadMeta() {
   const response = await fetch("/api/meta");
   meta = await response.json();
-  const models = meta.models || {};
+  updateVersionBadge();
+  const models = Object.fromEntries(
+    Object.entries(meta.models || {}).filter(([, model]) => model.status !== "planned"),
+  );
   modelSelect.innerHTML = "";
 
   for (const [id, model] of Object.entries(models)) {
@@ -720,28 +1040,62 @@ async function loadMeta() {
   if (downloadDirPath) {
     downloadDirPath.textContent = meta.paths?.downloadDir || "-";
   }
+  refreshTemplateOptions();
   updateModelTip();
+  updateStatusSurface();
+  renderCurrentModelTags();
+}
+
+function updateVersionBadge() {
+  const versionText = meta.app?.version ? `v${meta.app.version}` : "v2.x";
+  const versionTitle = meta.app?.versionLabel || versionText;
+  const badges = [$("versionBadge"), $("compactVersionBadge")].filter(Boolean);
+
+  badges.forEach((badge) => {
+    badge.textContent = versionText;
+    badge.title = versionTitle;
+    badge.setAttribute("aria-label", versionTitle);
+  });
 }
 
 function updateModelTip() {
   const current = meta.models?.[modelSelect.value];
   if (!current) {
     modelTip.textContent = t("modelFallbackTip");
+    if (topModelSummary) topModelSummary.textContent = "-";
     return;
   }
 
-  const modes = current.supports.join(" / ");
-  if (modelSelect.value === "doubao-seedance-1-5-pro-251215") {
+  const modes = (current.modeLabels || current.supports || []).join(" / ");
+  if (topModelSummary) topModelSummary.textContent = current.label;
+  if (String(modelSelect.value).startsWith("doubao-seedance-2-0")) {
     modelTip.textContent = t("modelTipStrict", { label: current.label, modes });
+    refreshTemplateOptions();
+    renderCurrentModelTags();
+    updateAdvancedPreview();
     return;
   }
 
   modelTip.textContent = t("modelTip", { label: current.label, modes });
+  refreshTemplateOptions();
+  renderCurrentModelTags();
+  updateAdvancedPreview();
+}
+
+function updateStatusSurface() {
+  if (apiModeBadge) {
+    apiModeBadge.textContent = $("apiKey")?.value?.trim() ? "用户 API" : "免费模式";
+  }
+  const current = meta.models?.[modelSelect.value];
+  if (topModelSummary) {
+    topModelSummary.textContent = current?.label || "-";
+  }
 }
 
 function collectSettings(includeApiKey = true) {
   const settings = {
     generationMode: getGenerationMode(),
+    generationTemplate: getSelectedTemplateId(),
     multiShotCount: Number(multiShotCount.value || 2),
     projectPath: "",
     projectPathLabel: $("projectPath").value.trim(),
@@ -759,6 +1113,7 @@ function collectSettings(includeApiKey = true) {
     watermark: $("watermark").checked,
     generateAudio: $("generateAudio").checked,
     extraParams: $("extraParams").value,
+    tokenPriceCnyPerK: Number($("tokenPriceCnyPerK").value || 0.016),
     videoNames: [$("videoName").value.trim()].filter(Boolean),
   };
 
@@ -786,7 +1141,9 @@ function applySettings(settings = {}) {
   const defaults = meta.defaults || {};
   $("apiKey").value = settings.apiKey || "";
   setGenerationMode(settings.generationMode || "single");
+  generationTemplateSelect.value = settings.generationTemplate || "first_last_frame";
   multiShotCount.value = String(settings.multiShotCount || 2);
+  if (multiShotCountMirror) multiShotCountMirror.value = String(settings.multiShotCount || 2);
   updateProjectPathDisplay(settings);
   $("videoName").value = settings.videoName || "";
   $("shotNumber").value = settings.shotNumber || "";
@@ -798,13 +1155,17 @@ function applySettings(settings = {}) {
   $("duration").value = normalizeDuration(settings.duration || MIN_DURATION_SECONDS);
   $("fps").value = String(settings.fps || defaults.fps || 30);
   $("pollIntervalMs").value = settings.pollIntervalMs || defaults.pollIntervalMs || 6000;
+  $("tokenPriceCnyPerK").value = String(settings.tokenPriceCnyPerK ?? defaults.tokenPriceCnyPerK ?? 0.016);
   $("seed").value = settings.seed || "";
   $("watermark").checked = Boolean(settings.watermark);
   $("generateAudio").checked = Boolean(settings.generateAudio ?? defaults.generateAudio);
   $("extraParams").value = settings.extraParams || "";
   updateVideoNameSuggestions(settings.videoNames || []);
   renderMultiShots(Number(settings.multiShotCount || 2));
+  updateTemplateUI();
   updateModelTip();
+  updateStatusSurface();
+  updateAdvancedPreview();
 }
 
 async function loadSettings() {
@@ -875,11 +1236,49 @@ function buildSharedJobPayload() {
     resolution: $("resolution").value,
     fps: Number($("fps").value),
     pollIntervalMs: Number($("pollIntervalMs").value),
+    tokenPriceCnyPerK: Number($("tokenPriceCnyPerK").value || 0.016),
     seed: $("seed").value.trim(),
     watermark: $("watermark").checked,
     generateAudio: $("generateAudio").checked,
     extraParams: parseExtraParams($("extraParams").value),
   };
+}
+
+function buildRequestPreviewPayload() {
+  const template = getSelectedTemplate();
+  const current = meta.models?.[modelSelect.value];
+  return {
+    template: template.id,
+    templateMode: template.mode,
+    generationMode: getGenerationMode(),
+    model: current?.label || modelSelect.value || "-",
+    ratio: $("ratio").value,
+    resolution: $("resolution").value,
+    fps: Number($("fps").value),
+    duration: normalizeDuration($("duration").value),
+    watermark: $("watermark").checked,
+    generateAudio: $("generateAudio").checked,
+    hasPrompt: Boolean($("prompt")?.value?.trim()),
+    hasFirstFrame: Boolean($("firstFrame")?.files?.[0]),
+    hasLastFrame: Boolean($("lastFrame")?.files?.[0]),
+    hasReferenceVideo: Boolean($("referenceVideo")?.files?.[0]),
+    extraParamsPreview: $("extraParams").value.trim() || "{}",
+  };
+}
+
+function updateAdvancedPreview() {
+  if (requestPreview) {
+    requestPreview.textContent = prettyJson(buildRequestPreviewPayload());
+  }
+  if (endpointPreview) {
+    const lines = [
+      `Create: ${$("createEndpoint")?.value?.trim() || "-"}`,
+      `Query: ${$("queryEndpointTemplate")?.value?.trim() || "-"}`,
+      `Poll: ${$("pollIntervalMs")?.value || "-"} ms`,
+      `Price: ¥${Number($("tokenPriceCnyPerK")?.value || 0.016).toFixed(3)} / 千 Token`,
+    ];
+    endpointPreview.textContent = lines.join("\n");
+  }
 }
 
 async function submitJobPayload(payload) {
@@ -896,25 +1295,37 @@ async function submitJobPayload(payload) {
 }
 
 async function buildSinglePayload() {
+  const template = getSelectedTemplate();
   const firstFile = $("firstFrame").files[0];
   const lastFile = $("lastFrame").files[0];
+  const referenceVideoFile = $("referenceVideo")?.files?.[0];
+  let firstFrameDataUrl = null;
+  let lastFrameDataUrl = null;
+  let referenceVideoDataUrl = null;
 
-  if (!firstFile || !lastFile) {
+  if (template.requires.firstFrame && !firstFile) {
+    throw new Error(template.requires.lastFrame ? t("missingFrames") : t("missingFirstFrame"));
+  }
+  if (template.requires.lastFrame && !lastFile) {
     throw new Error(t("missingFrames"));
   }
+  if (template.requires.video && !referenceVideoFile) {
+    throw new Error(t("missingReferenceVideo"));
+  }
 
-  const [firstFrameDataUrl, lastFrameDataUrl] = await Promise.all([
-    fileToDataUrl(firstFile),
-    fileToDataUrl(lastFile),
-  ]);
+  if (firstFile) firstFrameDataUrl = await fileToDataUrl(firstFile);
+  if (lastFile) lastFrameDataUrl = await fileToDataUrl(lastFile);
+  if (referenceVideoFile) referenceVideoDataUrl = await fileToDataUrl(referenceVideoFile);
 
   const payload = {
     ...buildSharedJobPayload(),
+    template: template.id,
     shotNumber: $("shotNumber").value.trim(),
     prompt: $("prompt").value.trim(),
     duration: normalizeDuration($("duration").value),
     firstFrameDataUrl,
     lastFrameDataUrl,
+    referenceVideoDataUrl,
   };
 
   if (!payload.prompt) {
@@ -1037,9 +1448,11 @@ saveSettingsBtn.addEventListener("click", async () => {
   }
 });
 
-projectFolderBtn.addEventListener("click", async () => {
-  await pickProjectDirectory();
-});
+if (projectFolderBtn) {
+  projectFolderBtn.addEventListener("click", async () => {
+    await pickProjectDirectory();
+  });
+}
 
 openDownloadsBtn.addEventListener("click", async () => {
   const response = await fetch("/api/system/open-downloads", { method: "POST" });
@@ -1051,14 +1464,16 @@ openDownloadsBtn.addEventListener("click", async () => {
   formStatus.textContent = data.path || "";
 });
 
-projectFolderFallback.addEventListener("change", () => {
-  const firstFile = projectFolderFallback.files?.[0];
-  if (!firstFile) return;
-  const folderName = firstFile.webkitRelativePath?.split("/")[0] || t("fallbackFolder");
-  $("projectPath").value = t("readonlyFolder", { folder: folderName });
-  formStatus.textContent = t("dirReadonly");
-  window.alert(t("dirReadonlyAlert"));
-});
+if (projectFolderFallback) {
+  projectFolderFallback.addEventListener("change", () => {
+    const firstFile = projectFolderFallback.files?.[0];
+    if (!firstFile) return;
+    const folderName = firstFile.webkitRelativePath?.split("/")[0] || t("fallbackFolder");
+    $("projectPath").value = t("readonlyFolder", { folder: folderName });
+    formStatus.textContent = t("dirReadonly");
+    window.alert(t("dirReadonlyAlert"));
+  });
+}
 
 refreshBtn.addEventListener("click", async () => {
   await loadJobs();
@@ -1084,8 +1499,8 @@ let headerTicking = false;
 
 function updateHeaderCompactState() {
   const shouldCompact = isHeaderCompact
-    ? window.scrollY > 72
-    : window.scrollY > 132;
+    ? window.scrollY > 48
+    : window.scrollY > 220;
   if (shouldCompact !== isHeaderCompact) {
     isHeaderCompact = shouldCompact;
     document.body.classList.toggle("header-compact", isHeaderCompact);
@@ -1094,6 +1509,12 @@ function updateHeaderCompactState() {
 }
 
 window.addEventListener("scroll", () => {
+  if (headerTicking) return;
+  headerTicking = true;
+  window.requestAnimationFrame(updateHeaderCompactState);
+}, { passive: true });
+
+window.addEventListener("resize", () => {
   if (headerTicking) return;
   headerTicking = true;
   window.requestAnimationFrame(updateHeaderCompactState);
@@ -1117,13 +1538,51 @@ form.addEventListener("change", (event) => {
 });
 
 modelSelect.addEventListener("change", updateModelTip);
-generationModeSwitch.querySelectorAll(".mode-option").forEach((button) => {
+generationTemplateSelect.addEventListener("change", updateTemplateUI);
+multiShotCount.addEventListener("change", () => {
+  if (multiShotCountMirror) multiShotCountMirror.value = multiShotCount.value;
+  renderMultiShots(Number(multiShotCount.value || 2));
+});
+if (multiShotCountMirror) {
+  multiShotCountMirror.addEventListener("change", () => {
+    multiShotCount.value = multiShotCountMirror.value;
+    renderMultiShots(Number(multiShotCount.value || 2));
+    updateAdvancedPreview();
+  });
+}
+if (openMultiShotBtn) {
+  openMultiShotBtn.addEventListener("click", () => {
+    setGenerationMode("multi");
+  });
+}
+if (closeMultiShotBtn) {
+  closeMultiShotBtn.addEventListener("click", () => {
+    setGenerationMode("single");
+  });
+}
+
+document.querySelectorAll(".advanced-tab").forEach((button) => {
   button.addEventListener("click", () => {
-    setGenerationMode(button.dataset.mode);
+    const nextTab = button.dataset.advancedTab;
+    document.querySelectorAll(".advanced-tab").forEach((item) => {
+      item.classList.toggle("active", item === button);
+    });
+    document.querySelectorAll(".advanced-tab-panel").forEach((panel) => {
+      panel.classList.toggle("active", panel.dataset.advancedPanel === nextTab);
+    });
   });
 });
-multiShotCount.addEventListener("change", () => {
-  renderMultiShots(Number(multiShotCount.value || 2));
+
+form.addEventListener("input", (event) => {
+  if (event.target?.id === "apiKey") {
+    updateStatusSurface();
+  }
+  updateAdvancedPreview();
+});
+
+form.addEventListener("change", () => {
+  updateStatusSurface();
+  updateAdvancedPreview();
 });
 
 async function bootstrap() {
@@ -1135,6 +1594,9 @@ async function bootstrap() {
   setGenerationMode(getGenerationMode());
   await loadJobs();
   startJobsPolling();
+  updateStatusSurface();
+  updateAdvancedPreview();
+  updateHeaderCompactState();
 }
 
 bootstrap();

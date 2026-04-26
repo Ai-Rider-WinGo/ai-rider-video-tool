@@ -8,239 +8,240 @@
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="hero">
-        <div class="brand-hero">
-          <img class="brand-logo" src="/ai-rider-logo.png" alt="AI-Rider" />
-          <div>
-            <p class="eyebrow">AI-Rider</p>
-            <h1 data-i18n="appTitle">AI-Rider｜首尾帧生成视频工具</h1>
+    <main class="shell workbench-shell">
+      <header class="top-status-bar panel">
+        <div class="status-brand">
+          <img class="brand-logo status-logo" src="/ai-rider-logo.png" alt="AI-Rider" />
+          <div class="status-brand-copy">
+            <div class="title-row">
+              <h1 data-i18n="appTitle">AI-Rider｜首尾帧生成视频工具</h1>
+              <span id="versionBadge" class="version-badge" aria-label="Product version">v2.1.0</span>
+            </div>
             <p class="lead" data-i18n="lead">上传首尾帧，配置火山视频模型，自动创建任务、轮询状态并下载结果到本地。</p>
           </div>
         </div>
         <div class="compact-title" aria-hidden="true">
           <img class="compact-title-logo" src="/ai-rider-logo.png" alt="" />
           <span class="compact-title-text" data-i18n="appTitle">AI-Rider｜首尾帧生成视频工具</span>
+          <span id="compactVersionBadge" class="version-badge compact">v2.1.0</span>
         </div>
-        <div class="hero-actions">
+        <div class="status-cluster">
+          <div class="status-chip-group">
+            <div class="status-chip">
+              <span class="status-chip-label">API</span>
+              <strong id="apiModeBadge">用户自带 API</strong>
+            </div>
+            <div class="status-chip">
+              <span class="status-chip-label" data-i18n="model">模型</span>
+              <strong id="topModelSummary">-</strong>
+            </div>
+            <div class="status-chip header-stat"><strong id="jobCountRunning">0</strong><em data-i18n="statRunning">进行中</em></div>
+            <div class="status-chip header-stat"><strong id="jobCountDone">0</strong><em data-i18n="statDone">完成</em></div>
+          </div>
           <div class="hero-controls">
             <button id="openDownloadsBtn" class="ghost" type="button" data-i18n="openDownloads">打开下载目录</button>
-            <div class="header-stats" id="headerStats">
-              <span class="header-stat"><strong id="jobCountTotal">0</strong><em data-i18n="statTotal">总数</em></span>
-              <span class="header-stat"><strong id="jobCountRunning">0</strong><em data-i18n="statRunning">进行中</em></span>
-              <span class="header-stat"><strong id="jobCountDone">0</strong><em data-i18n="statDone">完成</em></span>
-              <span class="header-stat"><strong id="jobCountError">0</strong><em data-i18n="statError">异常</em></span>
-            </div>
             <button id="langToggle" class="ghost" type="button">EN</button>
             <button id="themeToggle" class="ghost" type="button">切换浅色</button>
           </div>
-          <div class="hero-note">
+          <div class="hero-note status-download">
             <span data-i18n="downloadDir">下载目录</span>
             <strong id="downloadDirPath">-</strong>
           </div>
         </div>
       </header>
 
-      <section class="workspace">
-        <section class="panel form-panel">
+      <section class="workbench-grid">
+        <aside class="panel template-sidebar">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Template</p>
+              <h2 data-i18n="template">生成模板</h2>
+            </div>
+          </div>
+          <select id="generationTemplate" name="generationTemplate" class="visually-hidden"></select>
+          <div id="templateCards" class="template-cards template-sidebar-cards" role="tablist" aria-label="Generation templates"></div>
+        </aside>
+
+        <section class="panel generation-panel">
           <form id="job-form">
             <div class="section-head">
-              <h2 data-i18n="generationConfig">生成配置</h2>
+              <div>
+                <p class="eyebrow">Workspace</p>
+                <h2 data-i18n="generationStudio">视频生成工作台</h2>
+              </div>
               <button id="saveSettingsBtn" class="ghost" type="button" data-i18n="saveSettings">保存配置</button>
             </div>
 
-            <div class="grid two">
-              <label>
-                <span>API Key</span>
-                <input id="apiKey" name="apiKey" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="输入一次后可保存" required />
-              </label>
-              <label>
-                <span data-i18n="model">模型</span>
-                <select id="model" name="model" required></select>
-              </label>
-            </div>
-
-            <p class="field-tip" id="modelTip"></p>
-
-            <div class="grid two">
-              <label>
-                <span data-i18n="generationMode">生成模式</span>
-                <div class="mode-switch" id="generationModeSwitch">
-                  <button type="button" class="mode-option active" data-mode="single" data-i18n="singleMode">单镜头模式</button>
-                  <button type="button" class="mode-option" data-mode="multi" data-i18n="multiMode">多镜头模式</button>
+            <section class="workspace-topline">
+              <div class="template-current-head">
+                <div class="template-current-copy">
+                  <p class="eyebrow">Generation</p>
+                  <h3 id="currentTemplateTitle">首尾帧生成</h3>
+                  <p id="templateTip" class="field-tip"></p>
                 </div>
-                <input id="generationMode" name="generationMode" type="hidden" value="single" />
-              </label>
-              <label id="multiShotCountField" hidden>
-                <span data-i18n="shotCount">镜头数量</span>
-                <select id="multiShotCount" name="multiShotCount">
-                  <option value="1">1</option>
-                  <option value="2" selected>2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                  <option value="8">8</option>
-                  <option value="9">9</option>
-                  <option value="10">10</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="grid two">
-              <label>
-                <span data-i18n="projectFolder">项目目录</span>
-                <div class="picker-row">
-                  <button id="projectFolderBtn" class="ghost" type="button" data-i18n="chooseProjectFolder">选择项目目录</button>
-                  <input id="projectPath" name="projectPath" type="text" data-i18n-placeholder="noFolder" placeholder="未选择目录" readonly />
+                <div class="model-compact-panel">
+                  <label class="model-compact-select">
+                    <span data-i18n="model">模型</span>
+                    <select id="model" name="model" required></select>
+                  </label>
+                  <div id="currentModelTags" class="model-capability-tags"></div>
                 </div>
-                <input id="projectFolderFallback" type="file" webkitdirectory directory multiple hidden />
-              </label>
-              <label>
-                <span data-i18n="videoName">视频名称</span>
-                <input id="videoName" name="videoName" type="text" list="videoNameSuggestions" data-i18n-placeholder="videoNamePlaceholder" placeholder="例如：视频 1" />
-                <datalist id="videoNameSuggestions"></datalist>
-              </label>
-            </div>
+              </div>
+              <p class="field-tip" id="modelTip"></p>
+            </section>
 
-            <div class="grid five">
-              <label>
-                <span data-i18n="ratio">视频比例</span>
-                <select id="ratio" name="ratio">
-                  <option value="21:9">21:9</option>
-                  <option value="16:9" selected>16:9</option>
-                  <option value="9:16">9:16</option>
-                  <option value="1:1">1:1</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="resolution">分辨率</span>
-                <select id="resolution" name="resolution">
-                  <option value="720p">720p</option>
-                  <option value="1080p" selected>1080p</option>
-                </select>
-              </label>
-              <label>
-                <span>FPS</span>
-                <select id="fps" name="fps">
-                  <option value="12">12</option>
-                  <option value="24">24</option>
-                  <option value="25">25</option>
-                  <option value="30" selected>30</option>
-                </select>
-              </label>
-            </div>
+            <input id="generationMode" name="generationMode" type="hidden" value="single" />
+            <input id="projectPath" name="projectPath" type="hidden" value="" />
+            <input id="projectFolderFallback" type="file" webkitdirectory directory multiple hidden />
+            <label id="multiShotCountField" hidden>
+              <span data-i18n="shotCount">镜头数量</span>
+              <select id="multiShotCount" name="multiShotCount">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+            </label>
 
-            <div class="grid four">
-              <label>
-                <span data-i18n="pollInterval">轮询间隔（毫秒）</span>
-                <input id="pollIntervalMs" name="pollIntervalMs" type="number" min="1000" step="1000" value="6000" />
-              </label>
-              <label>
-                <span data-i18n="seed">随机种子</span>
-                <input id="seed" name="seed" type="number" data-i18n-placeholder="optional" placeholder="可选" />
-              </label>
-              <label class="checkbox">
-                <span data-i18n="watermark">水印</span>
-                <input id="watermark" name="watermark" type="checkbox" />
-              </label>
-              <label class="checkbox">
-                <span data-i18n="generateAudio">生成音频</span>
-                <input id="generateAudio" name="generateAudio" type="checkbox" />
-              </label>
-              <label>
-                <span data-i18n="submitStrategy">提交策略</span>
-                <input id="modeSummary" type="text" value="Seedance 1.5 Pro 严格模式" disabled />
-              </label>
-            </div>
-
-            <section id="singleModeFields">
-              <div class="grid two">
-                <label>
-                  <span data-i18n="shotNumber">镜头编号</span>
-                  <input id="shotNumber" name="shotNumber" type="text" data-i18n-placeholder="shotNumberPlaceholder" placeholder="例如：1" />
+            <section id="singleModeFields" class="single-workspace">
+              <div class="grid two" id="imageInputGrid">
+                <label id="firstFrameField">
+                  <span data-i18n="firstFrame">首帧图片</span>
+                  <input id="firstFrame" name="firstFrame" type="file" accept="image/*" />
                 </label>
-                <label>
-                  <span data-i18n="duration">时长（秒）</span>
-                  <input id="duration" name="duration" type="number" min="4" max="30" value="4" />
+                <label id="lastFrameField">
+                  <span data-i18n="lastFrame">尾帧图片</span>
+                  <input id="lastFrame" name="lastFrame" type="file" accept="image/*" />
                 </label>
               </div>
 
-              <label class="prompt-card">
+              <div class="grid one" id="videoInputGrid" hidden>
+                <label id="referenceVideoField">
+                  <span data-i18n="referenceVideo">参考视频</span>
+                  <input id="referenceVideo" name="referenceVideo" type="file" accept="video/*" />
+                </label>
+              </div>
+
+              <label class="prompt-card hero-prompt-card">
                 <span data-i18n="prompt">提示词</span>
                 <textarea
                   id="prompt"
                   name="prompt"
-                  rows="6"
+                  rows="8"
                   data-i18n-placeholder="singlePromptPlaceholder"
                   placeholder="在这里明确描述镜头运动、节奏、风格、镜头语言和终态。"
                 ></textarea>
                 <div class="prompt-presets" data-preset-target="prompt"></div>
               </label>
 
-              <div class="grid two">
+              <div class="creation-meta-row">
                 <label>
-                  <span data-i18n="firstFrame">首帧图片</span>
-                  <input id="firstFrame" name="firstFrame" type="file" accept="image/*" />
+                  <span data-i18n="videoName">视频名称</span>
+                  <input id="videoName" name="videoName" type="text" list="videoNameSuggestions" data-i18n-placeholder="videoNamePlaceholder" placeholder="例如：视频 1" />
+                  <datalist id="videoNameSuggestions"></datalist>
                 </label>
                 <label>
-                  <span data-i18n="lastFrame">尾帧图片</span>
-                  <input id="lastFrame" name="lastFrame" type="file" accept="image/*" />
+                  <span data-i18n="shotNumber">镜头编号</span>
+                  <input id="shotNumber" name="shotNumber" type="text" data-i18n-placeholder="shotNumberPlaceholder" placeholder="例如：1" />
                 </label>
               </div>
             </section>
 
-            <section id="multiModeFields" hidden>
-              <div class="multi-mode-head">
+            <section class="play-mode-panel">
+              <div class="play-mode-head">
+                <div>
+                  <h3 data-i18n="advancedWorkflow">高级工作流</h3>
+                  <p class="field-tip" data-i18n="multiEntryHelp">默认先走单镜头生成；需要复杂分镜时再进入多镜头编辑。</p>
+                </div>
+                <button id="openMultiShotBtn" class="ghost" type="button" data-i18n="openMultiShot">多镜头编辑</button>
+              </div>
+            </section>
+
+            <section id="multiModeFields" class="multi-editor-panel" hidden>
+              <div class="multi-mode-head multi-editor-head">
+                <button id="closeMultiShotBtn" class="ghost" type="button" data-i18n="backToSingle">返回单镜头</button>
                 <h3 data-i18n="multiShotConfig">多镜头配置</h3>
                 <p data-i18n="multiShotHelp">每个镜头独立设置首尾帧、时长和提示词；系统会自动在相邻镜头间插入 4 秒转场视频。</p>
+              </div>
+              <div class="multi-editor-toolbar">
+                <label>
+                  <span data-i18n="shotCount">镜头数量</span>
+                  <select id="multiShotCountMirror">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                </label>
               </div>
               <div id="multiShotsContainer" class="multi-shots"></div>
             </section>
 
-            <details class="advanced-panel collapsed-panel">
-              <summary data-i18n="extraParams">额外参数 JSON</summary>
-              <label class="advanced-field">
-                <span data-i18n="extraParamsHelp">用于透传账号或模型特有字段</span>
-                <textarea
-                  id="extraParams"
-                  name="extraParams"
-                  rows="5"
-                  data-i18n-placeholder="extraParamsPlaceholder"
-                  placeholder='例如：{"return_last_frame": true}'
-                ></textarea>
-              </label>
-            </details>
-
-            <details class="advanced-panel">
-              <summary data-i18n="advancedConfig">高级配置</summary>
-              <div class="grid two advanced-grid">
+            <details class="output-panel advanced-panel">
+              <summary data-i18n="outputSettings">输出设置</summary>
+              <div class="grid output-grid">
                 <label>
-                  <span data-i18n="createEndpoint">创建任务接口</span>
-                  <input
-                    id="createEndpoint"
-                    name="createEndpoint"
-                    type="url"
-                    value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
-                    required
-                  />
+                  <span data-i18n="ratio">视频比例</span>
+                  <select id="ratio" name="ratio">
+                    <option value="21:9">21:9</option>
+                    <option value="16:9" selected>16:9</option>
+                    <option value="9:16">9:16</option>
+                    <option value="1:1">1:1</option>
+                  </select>
                 </label>
                 <label>
-                  <span data-i18n="queryEndpoint">查询任务接口模板</span>
-                  <input
-                    id="queryEndpointTemplate"
-                    name="queryEndpointTemplate"
-                    type="text"
-                    value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}"
-                    required
-                  />
+                  <span data-i18n="resolution">分辨率</span>
+                  <select id="resolution" name="resolution">
+                    <option value="720p">720p</option>
+                    <option value="1080p" selected>1080p</option>
+                  </select>
+                </label>
+                <label>
+                  <span>FPS</span>
+                  <select id="fps" name="fps">
+                    <option value="12">12</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="30" selected>30</option>
+                  </select>
+                </label>
+                <label>
+                  <span data-i18n="duration">时长（秒）</span>
+                  <input id="duration" name="duration" type="number" min="4" max="30" value="4" />
+                </label>
+                <label>
+                  <span data-i18n="seed">随机种子</span>
+                  <input id="seed" name="seed" type="number" data-i18n-placeholder="optional" placeholder="可选" />
+                </label>
+                <label class="checkbox">
+                  <span data-i18n="watermark">水印</span>
+                  <input id="watermark" name="watermark" type="checkbox" />
+                </label>
+                <label class="checkbox">
+                  <span data-i18n="generateAudio">生成音频</span>
+                  <input id="generateAudio" name="generateAudio" type="checkbox" />
+                </label>
+                <label>
+                  <span data-i18n="submitStrategy">提交策略</span>
+                  <input id="modeSummary" type="text" value="Seedance 2.0 基线模式" disabled />
                 </label>
               </div>
             </details>
 
-            <div class="actions">
-              <button type="submit" id="submitBtn">创建生成任务</button>
+            <div class="actions main-actions">
+              <button type="submit" id="submitBtn" data-i18n="generateVideo">生成视频</button>
               <span id="formStatus" class="form-status"></span>
             </div>
           </form>
@@ -248,12 +249,107 @@
 
         <aside class="panel jobs-panel">
           <div class="section-head">
-            <h2 data-i18n="jobStatus">任务状态</h2>
+            <div>
+              <p class="eyebrow">Tasks</p>
+              <h2 data-i18n="jobStatus">任务状态</h2>
+            </div>
             <button id="refreshBtn" class="ghost" type="button" data-i18n="refresh">刷新</button>
           </div>
           <div id="jobs" class="jobs"></div>
         </aside>
       </section>
+
+      <details class="panel bottom-advanced-panel">
+        <summary class="bottom-advanced-summary">
+          <span class="eyebrow">Advanced</span>
+          <strong data-i18n="advancedConfig">高级配置</strong>
+        </summary>
+        <div class="advanced-tablist" role="tablist" aria-label="Advanced panels">
+          <button type="button" class="advanced-tab active" data-advanced-tab="api">API 配置</button>
+          <button type="button" class="advanced-tab" data-advanced-tab="cost">成本配置</button>
+          <button type="button" class="advanced-tab" data-advanced-tab="json">高级 JSON</button>
+          <button type="button" class="advanced-tab" data-advanced-tab="debug">调试接口</button>
+        </div>
+        <div class="advanced-tab-panels">
+          <section class="advanced-tab-panel active" data-advanced-panel="api">
+            <div class="grid three advanced-grid">
+              <label>
+                <span>API Key</span>
+                <input id="apiKey" name="apiKey" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="输入一次后可保存" required />
+              </label>
+              <label>
+                <span data-i18n="createEndpoint">创建任务接口</span>
+                <input
+                  id="createEndpoint"
+                  name="createEndpoint"
+                  type="url"
+                  value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
+                  required
+                />
+              </label>
+              <label>
+                <span data-i18n="queryEndpoint">查询任务接口模板</span>
+                <input
+                  id="queryEndpointTemplate"
+                  name="queryEndpointTemplate"
+                  type="text"
+                  value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}"
+                  required
+                />
+              </label>
+            </div>
+          </section>
+          <section class="advanced-tab-panel" data-advanced-panel="cost">
+            <div class="grid two advanced-grid">
+              <label>
+                <span data-i18n="tokenPriceCnyPerK">单价（元 / 千 Token）</span>
+                <input
+                  id="tokenPriceCnyPerK"
+                  name="tokenPriceCnyPerK"
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  value="0.016"
+                />
+              </label>
+              <div class="advanced-info-card">
+                <span class="advanced-info-label">估算说明</span>
+                <p>当前按 `总 Token / 1000 * 单价` 进行本地估算，默认 0.016 元 / 千 Token。</p>
+              </div>
+            </div>
+          </section>
+          <section class="advanced-tab-panel" data-advanced-panel="json">
+            <label class="advanced-field">
+              <span data-i18n="extraParams">额外参数 JSON</span>
+              <textarea
+                id="extraParams"
+                name="extraParams"
+                rows="6"
+                data-i18n-placeholder="extraParamsPlaceholder"
+                placeholder='例如：{"return_last_frame": true}'
+              ></textarea>
+            </label>
+          </section>
+          <section class="advanced-tab-panel" data-advanced-panel="debug">
+            <div class="grid two advanced-grid">
+              <div class="advanced-info-card">
+                <span class="advanced-info-label">请求预览</span>
+                <pre id="requestPreview" class="debug-pre">{}</pre>
+              </div>
+              <div class="advanced-info-card">
+                <span class="advanced-info-label">调试说明</span>
+                <pre id="endpointPreview" class="debug-pre">等待配置...</pre>
+              </div>
+            </div>
+            <div class="grid one advanced-grid">
+              <label>
+                <span data-i18n="pollInterval">轮询间隔（毫秒）</span>
+                <input id="pollIntervalMs" name="pollIntervalMs" type="number" min="1000" step="1000" value="6000" />
+              </label>
+            </div>
+          </section>
+        </div>
+      </details>
     </main>
 
     <template id="job-template">

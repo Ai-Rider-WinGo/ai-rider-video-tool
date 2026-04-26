@@ -1,5 +1,5 @@
 {
-  "model": "doubao-seedance-1-5-pro-251215",
+  "model": "doubao-seedance-2-0-260128",
   "createEndpoint": "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
   "queryEndpointTemplate": "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}",
   "ratio": "16:9",
@@ -7,6 +7,7 @@
   "duration": 4,
   "fps": 24,
   "pollIntervalMs": 6000,
+  "tokenPriceCnyPerK": 0.016,
   "seed": "",
   "watermark": false,
   "generateAudio": false,
