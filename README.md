@@ -1,29 +1,48 @@
-# AI-Rider | First-to-Last Frame Video Tool
+# AI-Rider Video | AI Video Workbench
 
 [中文](./README.zh-CN.md) | **English**
 
-AI-Rider Video Tool is a desktop-first video generation tool built around the "first frame + last frame + prompt" workflow.
+AI-Rider Video is a desktop-first AI video workbench evolving from the original "first frame + last frame + prompt" workflow into a template-driven, multi-model creation product.
 
-Current stable version: `1.1.3`
+Current stable version: `2.1.0`
 
 ## Documentation
 
 - [Version History](./docs/version-history.en.md)
+- [2.0.0 PRD Draft](./docs/versions/2.0.0.md)
 - [1.x Release Archive](./docs/versions/1.x.en.md)
 - [1.1.3 Release Notes](./docs/releases/1.1.3.en.md)
 - [Desktop Environment Setup](./docs/desktop-environment.en.md)
 - [Desktop App Roadmap](./docs/desktop-app-roadmap.en.md)
 
+## 2.x Overview
+
+The `2.x` line is the first real product-system upgrade for AI-Rider Video.
+
+- `2.0.x`: model adaptation, provider abstraction, activation-code groundwork
+- `2.1.x`: product-expression and workbench UX upgrades
+- `2.2.x`: web compatibility preparation
+- `2.3.x`: commercialization and ecosystem integration
+
+The current `2.1.0` build introduces the new workbench-oriented UI direction:
+
+- top status bar instead of config-first header clutter
+- template-driven creation flow
+- dynamic model/template capability mapping
+- advanced panels for API, cost, JSON, and debug fields
+- task cards with clearer progress and cost summaries
+
 ## Features
 
-- Configure API key, model, task creation endpoint, and polling endpoint template
-- Configure aspect ratio, resolution, duration, FPS, watermark, and seed
-- Pass through extra JSON parameters for account-specific or model-specific fields
-- Upload first frame and last frame in the UI
-- Create jobs on the backend and poll automatically
-- View task status, task ID, progress, and raw responses
-- Download generated videos to local `downloads/`
-- Generate download filenames from prompt content
+- Template-driven video generation workflows
+- First + last frame generation
+- First-frame generation
+- Text-to-video generation
+- Experimental video extension entry
+- Multi-model support with a registry-based capability layer
+- Local cost estimation based on token usage
+- Advanced panels for API endpoints, JSON passthrough, and debugging
+- Backend job creation, polling, result inspection, and local downloads
 
 ## Start
 

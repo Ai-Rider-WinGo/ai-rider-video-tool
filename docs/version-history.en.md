@@ -58,7 +58,30 @@ Detailed archive:
 
 - [1.x Release Archive](./versions/1.x.en.md)
 
-## 2.0.0
+## 2.x Series
 
-- In planning
-- Next step: define feature boundaries, modules, and milestone order
+The `2.x` line marks the shift from a single desktop tool to a structured AI video product system.
+
+### 2.0.0
+
+- Entered formal product-planning phase
+- Defined the version position: multi-model, multi-API, activation-ready, web-compatible product direction
+- Completed the first `2.0.0` PRD draft
+- Established the staged `2.x` versioning approach
+
+### 2.0.1
+
+- Model adaptation foundation
+- Introduced the model registry and capability mapping direction
+- Started integrating Seedance 2.0 into a shared product layer
+
+### 2.1.0
+
+- Product workbench upgrade
+- Reorganized the UI around templates, creation flow, task panel, and advanced sections
+- Shifted the product expression from a parameter-heavy tool to a video workbench
+- Established the current `2.1.0` stable desktop state
+
+Detailed archive:
+
+- [2.0.0 PRD Draft](./versions/2.0.0.md)
