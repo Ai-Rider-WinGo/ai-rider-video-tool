@@ -19,11 +19,15 @@ const templateCards = document.getElementById("templateCards");
 const currentTemplateTitle = document.getElementById("currentTemplateTitle");
 const currentModelTags = document.getElementById("currentModelTags");
 const downloadDirPath = document.getElementById("downloadDirPath");
+const configuredDownloadDir = document.getElementById("configuredDownloadDir");
+const projectFolderStatus = document.getElementById("projectFolderStatus");
 const topModelSummary = document.getElementById("topModelSummary");
 const apiModeBadge = document.getElementById("apiModeBadge");
 const videoNameSuggestions = document.getElementById("videoNameSuggestions");
 const projectFolderBtn = document.getElementById("projectFolderBtn");
+const resetProjectFolderBtn = document.getElementById("resetProjectFolderBtn");
 const openDownloadsBtn = document.getElementById("openDownloadsBtn");
+const openDownloadsPanelBtn = document.getElementById("openDownloadsPanelBtn");
 const projectFolderFallback = document.getElementById("projectFolderFallback");
 const generationMode = document.getElementById("generationMode");
 const multiShotCount = document.getElementById("multiShotCount");
@@ -155,6 +159,13 @@ const I18N = {
     lead: "上传首尾帧，配置火山视频模型，自动创建任务、轮询状态并下载结果到本地。",
     downloadDir: "下载目录",
     openDownloads: "打开下载目录",
+    localSettings: "本地设置",
+    currentDownloadLocation: "当前下载位置",
+    defaultDownloadLocation: "默认下载目录",
+    chooseDownloadDir: "选择下载目录",
+    resetDownloadDir: "恢复默认目录",
+    usingDefaultDownloadDir: "当前未指定自定义目录，任务视频会保存到默认下载目录。",
+    usingCustomDownloadDir: "当前已指定自定义目录标签：{path}。若环境支持可写目录句柄，生成完成后会尝试同步写入该目录。",
     statTotal: "总数",
     statRunning: "进行中",
     statDone: "完成",
@@ -276,6 +287,13 @@ const I18N = {
     lead: "Upload first and last frames, configure the video model, create tasks, poll status, and download results locally.",
     downloadDir: "Download folder",
     openDownloads: "Open downloads",
+    localSettings: "Local",
+    currentDownloadLocation: "Current download location",
+    defaultDownloadLocation: "Default downloads folder",
+    chooseDownloadDir: "Choose download folder",
+    resetDownloadDir: "Reset to default",
+    usingDefaultDownloadDir: "No custom folder is selected. Generated videos will use the default downloads folder.",
+    usingCustomDownloadDir: "Custom folder label selected: {path}. If writable directory handles are supported, completed videos will also sync there.",
     statTotal: "Total",
     statRunning: "Running",
     statDone: "Done",
@@ -457,6 +475,7 @@ function applyI18n(root = document) {
   updateSubmitButtonState();
   updateStatusSurface();
   updateAdvancedPreview();
+  updateDownloadDirectoryUI();
 }
 
 function getHelpText(key) {
@@ -1040,6 +1059,7 @@ async function loadMeta() {
   if (downloadDirPath) {
     downloadDirPath.textContent = meta.paths?.downloadDir || "-";
   }
+  updateDownloadDirectoryUI();
   refreshTemplateOptions();
   updateModelTip();
   updateStatusSurface();
@@ -1135,6 +1155,19 @@ function updateVideoNameSuggestions(videoNames = []) {
 
 function updateProjectPathDisplay(settings = {}) {
   $("projectPath").value = settings.projectPathLabel || settings.projectPath || "";
+  updateDownloadDirectoryUI();
+}
+
+function updateDownloadDirectoryUI() {
+  const customPath = $("projectPath")?.value?.trim();
+  if (configuredDownloadDir) {
+    configuredDownloadDir.textContent = customPath || meta.paths?.downloadDir || "-";
+  }
+  if (projectFolderStatus) {
+    projectFolderStatus.textContent = customPath
+      ? t("usingCustomDownloadDir", { path: customPath })
+      : t("usingDefaultDownloadDir");
+  }
 }
 
 function applySettings(settings = {}) {
@@ -1201,6 +1234,8 @@ async function pickProjectDirectory() {
 
     projectDirectoryHandle = await window.showDirectoryPicker({ mode: "readwrite" });
     $("projectPath").value = projectDirectoryHandle.name || t("fallbackFolder");
+    updateDownloadDirectoryUI();
+    await saveSettings();
     formStatus.textContent = t("dirSelected", { path: $("projectPath").value });
   } catch (error) {
     if (error?.name !== "AbortError") {
@@ -1454,6 +1489,16 @@ if (projectFolderBtn) {
   });
 }
 
+if (resetProjectFolderBtn) {
+  resetProjectFolderBtn.addEventListener("click", async () => {
+    projectDirectoryHandle = null;
+    $("projectPath").value = "";
+    updateDownloadDirectoryUI();
+    await saveSettings();
+    formStatus.textContent = t("usingDefaultDownloadDir");
+  });
+}
+
 openDownloadsBtn.addEventListener("click", async () => {
   const response = await fetch("/api/system/open-downloads", { method: "POST" });
   const data = await response.json();
@@ -1464,12 +1509,20 @@ openDownloadsBtn.addEventListener("click", async () => {
   formStatus.textContent = data.path || "";
 });
 
+if (openDownloadsPanelBtn) {
+  openDownloadsPanelBtn.addEventListener("click", async () => {
+    openDownloadsBtn.click();
+  });
+}
+
 if (projectFolderFallback) {
-  projectFolderFallback.addEventListener("change", () => {
+  projectFolderFallback.addEventListener("change", async () => {
     const firstFile = projectFolderFallback.files?.[0];
     if (!firstFile) return;
     const folderName = firstFile.webkitRelativePath?.split("/")[0] || t("fallbackFolder");
     $("projectPath").value = t("readonlyFolder", { folder: folderName });
+    updateDownloadDirectoryUI();
+    await saveSettings();
     formStatus.textContent = t("dirReadonly");
     window.alert(t("dirReadonlyAlert"));
   });
@@ -1494,31 +1547,7 @@ langToggle.addEventListener("click", async () => {
   await loadJobs();
 });
 
-let isHeaderCompact = false;
-let headerTicking = false;
-
-function updateHeaderCompactState() {
-  const shouldCompact = isHeaderCompact
-    ? window.scrollY > 48
-    : window.scrollY > 220;
-  if (shouldCompact !== isHeaderCompact) {
-    isHeaderCompact = shouldCompact;
-    document.body.classList.toggle("header-compact", isHeaderCompact);
-  }
-  headerTicking = false;
-}
-
-window.addEventListener("scroll", () => {
-  if (headerTicking) return;
-  headerTicking = true;
-  window.requestAnimationFrame(updateHeaderCompactState);
-}, { passive: true });
-
-window.addEventListener("resize", () => {
-  if (headerTicking) return;
-  headerTicking = true;
-  window.requestAnimationFrame(updateHeaderCompactState);
-}, { passive: true });
+document.body.classList.add("header-compact");
 
 form.addEventListener("click", (event) => {
   const button = event.target.closest("[data-prompt-preset]");

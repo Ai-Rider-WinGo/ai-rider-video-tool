@@ -43,10 +43,6 @@
             <button id="langToggle" class="ghost" type="button">EN</button>
             <button id="themeToggle" class="ghost" type="button">切换浅色</button>
           </div>
-          <div class="hero-note status-download">
-            <span data-i18n="downloadDir">下载目录</span>
-            <strong id="downloadDirPath">-</strong>
-          </div>
         </div>
       </header>
 
@@ -265,13 +261,32 @@
           <strong data-i18n="advancedConfig">高级配置</strong>
         </summary>
         <div class="advanced-tablist" role="tablist" aria-label="Advanced panels">
-          <button type="button" class="advanced-tab active" data-advanced-tab="api">API 配置</button>
+          <button type="button" class="advanced-tab active" data-advanced-tab="local" data-i18n="localSettings">本地设置</button>
+          <button type="button" class="advanced-tab" data-advanced-tab="api">API 配置</button>
           <button type="button" class="advanced-tab" data-advanced-tab="cost">成本配置</button>
           <button type="button" class="advanced-tab" data-advanced-tab="json">高级 JSON</button>
           <button type="button" class="advanced-tab" data-advanced-tab="debug">调试接口</button>
         </div>
         <div class="advanced-tab-panels">
-          <section class="advanced-tab-panel active" data-advanced-panel="api">
+          <section class="advanced-tab-panel active" data-advanced-panel="local">
+            <div class="grid two advanced-grid">
+              <div class="advanced-info-card">
+                <span class="advanced-info-label" data-i18n="currentDownloadLocation">当前下载位置</span>
+                <strong id="configuredDownloadDir" class="path-display">默认下载目录</strong>
+                <p id="projectFolderStatus" class="field-tip" data-i18n="usingDefaultDownloadDir">当前未指定自定义目录，任务视频会保存到默认下载目录。</p>
+              </div>
+              <div class="advanced-info-card">
+                <span class="advanced-info-label" data-i18n="defaultDownloadLocation">默认下载目录</span>
+                <strong id="downloadDirPath" class="path-display">-</strong>
+                <div class="advanced-actions">
+                  <button id="projectFolderBtn" class="ghost" type="button" data-i18n="chooseDownloadDir">选择下载目录</button>
+                  <button id="resetProjectFolderBtn" class="ghost" type="button" data-i18n="resetDownloadDir">恢复默认目录</button>
+                  <button id="openDownloadsPanelBtn" class="ghost" type="button" data-i18n="openDownloads">打开下载目录</button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="advanced-tab-panel" data-advanced-panel="api">
             <div class="grid three advanced-grid">
               <label>
                 <span>API Key</span>
