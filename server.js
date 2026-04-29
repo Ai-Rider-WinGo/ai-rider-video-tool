@@ -20,8 +20,8 @@ const DOWNLOAD_DIR = process.env.AI_RIDER_DOWNLOAD_DIR
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
 const MIN_DURATION_SECONDS = 4;
-const PRODUCT_VERSION = "2.1.0";
-const PRODUCT_VERSION_LABEL = "2.1.0 Product Workbench Upgrade";
+const PRODUCT_VERSION = "2.2.0";
+const PRODUCT_VERSION_LABEL = "2.2.0 Workspace Expansion Release";
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });

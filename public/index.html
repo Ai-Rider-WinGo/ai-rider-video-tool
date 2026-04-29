@@ -8,368 +8,571 @@
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
-    <main class="shell workbench-shell">
-      <header class="top-status-bar panel">
-        <div class="status-brand">
-          <img class="brand-logo status-logo" src="/ai-rider-logo.png" alt="AI-Rider" />
-          <div class="status-brand-copy">
+    <main class="app-layout">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <img class="sidebar-logo" src="/ai-rider-logo.png" alt="AI-Rider" />
+          <div class="sidebar-brand-copy">
+            <div class="sidebar-brand-topline">
+              <strong>AI-Rider</strong>
+              <span class="brand-mini-badge">2.0</span>
+            </div>
+            <span>AI Video Studio</span>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Primary">
+          <div class="nav-group">
+            <span class="nav-group-title">工作台</span>
+            <button class="nav-item active" type="button" data-view="studio">
+              <span class="nav-icon"></span>
+              <span>视频生成</span>
+            </button>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group-title">创作</span>
+            <button class="nav-item" type="button" data-view="templates">
+              <span class="nav-icon"></span>
+              <span>模板中心</span>
+            </button>
+            <button class="nav-item" type="button" data-view="models">
+              <span class="nav-icon"></span>
+              <span>模型市场</span>
+            </button>
+            <button class="nav-item" type="button" data-view="assets">
+              <span class="nav-icon"></span>
+              <span>我的素材</span>
+            </button>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group-title">任务</span>
+            <button class="nav-item" type="button" data-view="studio" data-task-filter-target="all" data-nav-key="all">
+              <span class="nav-icon"></span>
+              <span>任务管理</span>
+              <span class="nav-badge" id="jobCountTotal">0</span>
+            </button>
+            <button class="nav-item" type="button" data-view="studio" data-task-filter-target="done" data-nav-key="done">
+              <span class="nav-icon"></span>
+              <span>历史记录</span>
+            </button>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group-title">账户</span>
+            <button class="nav-item" type="button" data-open-advanced="api">
+              <span class="nav-icon"></span>
+              <span>API 管理</span>
+            </button>
+            <button class="nav-item" type="button">
+              <span class="nav-icon"></span>
+              <span>激活码</span>
+            </button>
+            <button class="nav-item" type="button" data-open-advanced="local">
+              <span class="nav-icon"></span>
+              <span>设置</span>
+            </button>
+          </div>
+        </nav>
+
+        <div class="sidebar-footer">
+          <section class="sidebar-card pro-card">
+            <div>
+              <strong>AI-Rider Pro</strong>
+              <p>解锁更多高阶功能</p>
+            </div>
+            <button class="pro-button" type="button">立即升级</button>
+          </section>
+
+          <section class="sidebar-card usage-card">
+            <div class="usage-head">
+              <strong>本月使用量</strong>
+              <span>68 / 200 任务</span>
+            </div>
+            <div class="usage-track"><span style="width: 34%"></span></div>
+            <div class="usage-foot">
+              <span>34%</span>
+              <span id="apiModeBadge">用户 API</span>
+            </div>
+          </section>
+
+          <p class="sidebar-meta">© 2024 AI-Rider</p>
+        </div>
+      </aside>
+
+      <section class="workspace-shell">
+        <header class="topbar">
+          <div class="topbar-copy">
             <div class="title-row">
-              <h1 data-i18n="appTitle">AI-Rider｜首尾帧生成视频工具</h1>
-              <span id="versionBadge" class="version-badge" aria-label="Product version">v2.1.0</span>
+              <h1 id="topbarTitle" data-i18n="generationStudio">视频生成工作台</h1>
+              <span id="versionBadge" class="version-badge">v2.2.0</span>
+              <span id="compactVersionBadge" class="version-badge compact visually-hidden">v2.2.0</span>
             </div>
-            <p class="lead" data-i18n="lead">上传首尾帧，配置火山视频模型，自动创建任务、轮询状态并下载结果到本地。</p>
+            <p id="topbarSubtitle" class="lead">高效的 AI 视频创作平台</p>
           </div>
-        </div>
-        <div class="compact-title" aria-hidden="true">
-          <img class="compact-title-logo" src="/ai-rider-logo.png" alt="" />
-          <span class="compact-title-text" data-i18n="appTitle">AI-Rider｜首尾帧生成视频工具</span>
-          <span id="compactVersionBadge" class="version-badge compact">v2.1.0</span>
-        </div>
-        <div class="status-cluster">
-          <div class="status-chip-group">
-            <div class="status-chip">
-              <span class="status-chip-label">API</span>
-              <strong id="apiModeBadge">用户自带 API</strong>
+          <div class="topbar-actions">
+            <button class="toolbar-link" type="button" data-open-advanced="api">API 管理</button>
+            <button class="toolbar-link" type="button" data-open-advanced="local">用户中心</button>
+            <label class="top-model-select">
+              <span>当前模型</span>
+              <select id="model" name="model" required></select>
+            </label>
+            <button id="saveSettingsBtn" class="ghost subtle" type="button" data-i18n="saveSettings">保存配置</button>
+            <button id="submitTopBtn" class="primary-action" type="button">+ 新建任务</button>
+            <div class="toolbar-utility">
+              <button id="langToggle" class="icon-button" type="button">EN</button>
+              <button id="themeToggle" class="icon-button" type="button">浅色</button>
+              <button id="openDownloadsBtn" class="icon-button" type="button" data-i18n="openDownloads">下载</button>
             </div>
-            <div class="status-chip">
-              <span class="status-chip-label" data-i18n="model">模型</span>
-              <strong id="topModelSummary">-</strong>
-            </div>
-            <div class="status-chip header-stat"><strong id="jobCountRunning">0</strong><em data-i18n="statRunning">进行中</em></div>
-            <div class="status-chip header-stat"><strong id="jobCountDone">0</strong><em data-i18n="statDone">完成</em></div>
           </div>
-          <div class="hero-controls">
-            <button id="openDownloadsBtn" class="ghost" type="button" data-i18n="openDownloads">打开下载目录</button>
-            <button id="langToggle" class="ghost" type="button">EN</button>
-            <button id="themeToggle" class="ghost" type="button">切换浅色</button>
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <section class="workbench-grid">
-        <aside class="panel template-sidebar">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Template</p>
-              <h2 data-i18n="template">生成模板</h2>
-            </div>
-          </div>
-          <select id="generationTemplate" name="generationTemplate" class="visually-hidden"></select>
-          <div id="templateCards" class="template-cards template-sidebar-cards" role="tablist" aria-label="Generation templates"></div>
-        </aside>
+        <div class="workspace-grid">
+          <section class="main-workspace">
+            <form id="job-form" class="studio-form content-page is-active" data-page="studio">
+              <input id="generationMode" name="generationMode" type="hidden" value="single" />
+              <input id="projectPath" name="projectPath" type="hidden" value="" />
+              <input id="projectFolderFallback" type="file" webkitdirectory directory multiple hidden />
+              <select id="generationTemplate" name="generationTemplate" class="visually-hidden"></select>
 
-        <section class="panel generation-panel">
-          <form id="job-form">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Workspace</p>
-                <h2 data-i18n="generationStudio">视频生成工作台</h2>
-              </div>
-              <button id="saveSettingsBtn" class="ghost" type="button" data-i18n="saveSettings">保存配置</button>
-            </div>
+              <label id="multiShotCountField" class="visually-hidden">
+                <span data-i18n="shotCount">镜头数量</span>
+                <select id="multiShotCount" name="multiShotCount">
+                  <option value="1">1</option>
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                </select>
+              </label>
 
-            <section class="workspace-topline">
-              <div class="template-current-head">
-                <div class="template-current-copy">
-                  <p class="eyebrow">Generation</p>
-                  <h3 id="currentTemplateTitle">首尾帧生成</h3>
-                  <p id="templateTip" class="field-tip"></p>
+              <section class="main-card">
+                <div class="card-header">
+                  <div>
+                    <h2 id="currentTemplateTitle">首尾帧生成</h2>
+                    <p id="templateTip" class="field-tip">通过首尾帧和描述词，生成高质量连贯视频</p>
+                  </div>
+                  <div class="model-summary-card">
+                    <span class="model-summary-label">当前模型</span>
+                    <strong id="topModelSummary">Seedance 1.5 Pro</strong>
+                    <div id="currentModelTags" class="model-capability-tags"></div>
+                    <p id="modelTip" class="field-tip"></p>
+                  </div>
                 </div>
-                <div class="model-compact-panel">
-                  <label class="model-compact-select">
-                    <span data-i18n="model">模型</span>
-                    <select id="model" name="model" required></select>
+
+                <div class="mode-tabs">
+                  <div id="templateCards" class="template-tabs" role="tablist" aria-label="Generation templates"></div>
+                </div>
+
+                <section id="singleModeFields" class="single-workspace">
+                  <div class="upload-grid" id="imageInputGrid">
+                    <label id="firstFrameField" class="upload-panel">
+                      <span data-i18n="firstFrame">首帧图片</span>
+                      <div class="upload-box">
+                        <strong>点击或拖拽上传首帧</strong>
+                        <p>支持 JPG / PNG，最大 10MB</p>
+                        <input id="firstFrame" name="firstFrame" type="file" accept="image/*" />
+                      </div>
+                      <button class="ghost wide" type="button" data-asset-target="firstFrame">从素材库选择</button>
+                    </label>
+
+                    <div class="upload-linker" aria-hidden="true">→</div>
+
+                    <label id="lastFrameField" class="upload-panel">
+                      <span data-i18n="lastFrame">尾帧图片</span>
+                      <div class="upload-box">
+                        <strong>点击或拖拽上传尾帧</strong>
+                        <p>支持 JPG / PNG，最大 10MB</p>
+                        <input id="lastFrame" name="lastFrame" type="file" accept="image/*" />
+                      </div>
+                      <button class="ghost wide" type="button" data-asset-target="lastFrame">从素材库选择</button>
+                    </label>
+                  </div>
+
+                  <div class="upload-grid video-upload-grid" id="videoInputGrid" hidden>
+                    <label id="referenceVideoField" class="upload-panel upload-panel-full">
+                      <span data-i18n="referenceVideo">参考视频</span>
+                      <div class="upload-box">
+                        <strong>点击上传参考视频</strong>
+                        <p>支持 MP4 / MOV，用于视频延展工作流</p>
+                        <input id="referenceVideo" name="referenceVideo" type="file" accept="video/*" />
+                      </div>
+                      <button class="ghost wide" type="button" data-asset-target="referenceVideo">从素材库选择</button>
+                    </label>
+                  </div>
+
+                  <label class="prompt-card">
+                    <span data-i18n="prompt">提示词</span>
+                    <textarea
+                      id="prompt"
+                      name="prompt"
+                      rows="8"
+                      data-i18n-placeholder="singlePromptPlaceholder"
+                      placeholder="在这里明确描述镜头运动、节奏、风格、镜头语言和终态。"
+                    ></textarea>
+                    <div class="prompt-toolbar">
+                      <span class="prompt-helper">提示词助手</span>
+                      <div class="prompt-presets" data-preset-target="prompt"></div>
+                    </div>
                   </label>
-                  <div id="currentModelTags" class="model-capability-tags"></div>
+
+                  <div class="settings-row">
+                    <label>
+                      <span data-i18n="videoName">视频名称</span>
+                      <input id="videoName" name="videoName" type="text" list="videoNameSuggestions" data-i18n-placeholder="videoNamePlaceholder" placeholder="例如：视频 1" />
+                      <datalist id="videoNameSuggestions"></datalist>
+                    </label>
+                    <label>
+                      <span data-i18n="shotNumber">镜头编号</span>
+                      <input id="shotNumber" name="shotNumber" type="text" data-i18n-placeholder="shotNumberPlaceholder" placeholder="例如：1" />
+                    </label>
+                    <label>
+                      <span data-i18n="resolution">分辨率</span>
+                      <select id="resolution" name="resolution">
+                        <option value="720p">720p</option>
+                        <option value="1080p" selected>1080p</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span data-i18n="duration">时长（秒）</span>
+                      <input id="duration" name="duration" type="number" min="4" max="30" value="4" />
+                    </label>
+                  </div>
+                </section>
+
+                <details class="advanced-panel inline-advanced-panel">
+                  <summary>
+                    <span data-i18n="advancedConfig">高级设置</span>
+                  </summary>
+
+                  <div class="advanced-core-grid">
+                    <label>
+                      <span data-i18n="ratio">视频比例</span>
+                      <select id="ratio" name="ratio">
+                        <option value="21:9">21:9</option>
+                        <option value="16:9" selected>16:9</option>
+                        <option value="9:16">9:16</option>
+                        <option value="1:1">1:1</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>FPS</span>
+                      <select id="fps" name="fps">
+                        <option value="12">12</option>
+                        <option value="24">24</option>
+                        <option value="25">25</option>
+                        <option value="30" selected>30</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span data-i18n="seed">随机种子</span>
+                      <input id="seed" name="seed" type="number" data-i18n-placeholder="optional" placeholder="可选" />
+                    </label>
+                    <label>
+                      <span data-i18n="submitStrategy">提交策略</span>
+                      <input id="modeSummary" type="text" value="Seedance 2.0 基线模式" disabled />
+                    </label>
+                    <label class="checkbox">
+                      <span data-i18n="watermark">水印</span>
+                      <input id="watermark" name="watermark" type="checkbox" />
+                    </label>
+                    <label class="checkbox">
+                      <span data-i18n="generateAudio">生成音频</span>
+                      <input id="generateAudio" name="generateAudio" type="checkbox" />
+                    </label>
+                  </div>
+
+                  <div class="advanced-tablist" role="tablist" aria-label="Advanced panels">
+                    <button type="button" class="advanced-tab active" data-advanced-tab="local" data-i18n="localSettings">本地设置</button>
+                    <button type="button" class="advanced-tab" data-advanced-tab="api">API 配置</button>
+                    <button type="button" class="advanced-tab" data-advanced-tab="cost">成本配置</button>
+                    <button type="button" class="advanced-tab" data-advanced-tab="json">高级 JSON</button>
+                    <button type="button" class="advanced-tab" data-advanced-tab="debug">调试接口</button>
+                  </div>
+
+                  <div class="advanced-tab-panels">
+                    <section class="advanced-tab-panel active" data-advanced-panel="local">
+                      <div class="advanced-card-grid">
+                        <div class="advanced-info-card">
+                          <span class="advanced-info-label" data-i18n="currentDownloadLocation">当前下载位置</span>
+                          <strong id="configuredDownloadDir" class="path-display">默认下载目录</strong>
+                          <p id="projectFolderStatus" class="field-tip" data-i18n="usingDefaultDownloadDir">当前未指定自定义目录，任务视频会保存到默认下载目录。</p>
+                        </div>
+                        <div class="advanced-info-card">
+                          <span class="advanced-info-label" data-i18n="defaultDownloadLocation">默认下载目录</span>
+                          <strong id="downloadDirPath" class="path-display">-</strong>
+                          <div class="advanced-actions">
+                            <button id="projectFolderBtn" class="ghost" type="button" data-i18n="chooseDownloadDir">选择下载目录</button>
+                            <button id="resetProjectFolderBtn" class="ghost" type="button" data-i18n="resetDownloadDir">恢复默认目录</button>
+                            <button id="openDownloadsPanelBtn" class="ghost" type="button" data-i18n="openDownloads">打开下载目录</button>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="advanced-tab-panel" data-advanced-panel="api">
+                      <div class="advanced-field-grid three">
+                        <label>
+                          <span>API Key</span>
+                          <input id="apiKey" name="apiKey" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="输入一次后可保存" required />
+                        </label>
+                        <label>
+                          <span data-i18n="createEndpoint">创建任务接口</span>
+                          <input
+                            id="createEndpoint"
+                            name="createEndpoint"
+                            type="url"
+                            value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
+                            required
+                          />
+                        </label>
+                        <label>
+                          <span data-i18n="queryEndpoint">查询任务接口模板</span>
+                          <input
+                            id="queryEndpointTemplate"
+                            name="queryEndpointTemplate"
+                            type="text"
+                            value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}"
+                            required
+                          />
+                        </label>
+                      </div>
+                    </section>
+
+                    <section class="advanced-tab-panel" data-advanced-panel="cost">
+                      <div class="advanced-card-grid">
+                        <label>
+                          <span data-i18n="tokenPriceCnyPerK">单价（元 / 千 Token）</span>
+                          <input
+                            id="tokenPriceCnyPerK"
+                            name="tokenPriceCnyPerK"
+                            type="number"
+                            min="0"
+                            step="0.001"
+                            value="0.016"
+                          />
+                        </label>
+                        <div class="advanced-info-card">
+                          <span class="advanced-info-label">估算说明</span>
+                          <p>当前按总 Token / 1000 × 单价进行本地估算，默认 0.016 元 / 千 Token。</p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="advanced-tab-panel" data-advanced-panel="json">
+                      <label class="advanced-field">
+                        <span data-i18n="extraParams">额外参数 JSON</span>
+                        <textarea
+                          id="extraParams"
+                          name="extraParams"
+                          rows="6"
+                          data-i18n-placeholder="extraParamsPlaceholder"
+                          placeholder='例如：{"return_last_frame": true}'
+                        ></textarea>
+                      </label>
+                    </section>
+
+                    <section class="advanced-tab-panel" data-advanced-panel="debug">
+                      <div class="advanced-card-grid">
+                        <div class="advanced-info-card">
+                          <span class="advanced-info-label">请求预览</span>
+                          <pre id="requestPreview" class="debug-pre">{}</pre>
+                        </div>
+                        <div class="advanced-info-card">
+                          <span class="advanced-info-label">调试说明</span>
+                          <pre id="endpointPreview" class="debug-pre">等待配置...</pre>
+                        </div>
+                      </div>
+                      <div class="advanced-field-grid">
+                        <label>
+                          <span data-i18n="pollInterval">轮询间隔（毫秒）</span>
+                          <input id="pollIntervalMs" name="pollIntervalMs" type="number" min="1000" step="1000" value="6000" />
+                        </label>
+                      </div>
+                    </section>
+                  </div>
+                </details>
+
+                <section class="play-mode-panel">
+                  <div class="play-mode-copy">
+                    <div class="play-mode-icon">◎</div>
+                    <div>
+                      <h3 data-i18n="openMultiShot">多镜头编辑</h3>
+                      <p data-i18n="multiEntryHelp">默认先走单镜头生成；需要复杂分镜时再进入多镜头编辑。</p>
+                    </div>
+                  </div>
+                  <button id="openMultiShotBtn" class="ghost action-arrow" type="button">进入</button>
+                </section>
+
+                <section id="multiModeFields" class="multi-editor-panel" hidden>
+                  <div class="multi-editor-head">
+                    <div>
+                      <h3 data-i18n="multiShotConfig">多镜头配置</h3>
+                      <p data-i18n="multiShotHelp">每个镜头独立设置首尾帧、时长和提示词；系统会自动在相邻镜头间插入 4 秒转场视频。</p>
+                    </div>
+                    <div class="multi-editor-actions">
+                      <label>
+                        <span data-i18n="shotCount">镜头数量</span>
+                        <select id="multiShotCountMirror">
+                          <option value="1">1</option>
+                          <option value="2" selected>2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                          <option value="6">6</option>
+                          <option value="7">7</option>
+                          <option value="8">8</option>
+                          <option value="9">9</option>
+                          <option value="10">10</option>
+                        </select>
+                      </label>
+                      <button id="closeMultiShotBtn" class="ghost" type="button" data-i18n="backToSingle">返回单镜头</button>
+                    </div>
+                  </div>
+                  <div id="multiShotsContainer" class="multi-shots"></div>
+                </section>
+
+                <div class="generate-footer">
+                  <div class="generate-meta">
+                    <span class="cost-label">预计消耗</span>
+                    <strong>8 任务点</strong>
+                  </div>
+                  <div class="generate-actions">
+                    <span id="formStatus" class="form-status"></span>
+                    <button type="submit" id="submitBtn" class="generate-button" data-i18n="generateVideo">生成视频</button>
+                  </div>
                 </div>
-              </div>
-              <p class="field-tip" id="modelTip"></p>
-            </section>
+              </section>
 
-            <input id="generationMode" name="generationMode" type="hidden" value="single" />
-            <input id="projectPath" name="projectPath" type="hidden" value="" />
-            <input id="projectFolderFallback" type="file" webkitdirectory directory multiple hidden />
-            <label id="multiShotCountField" hidden>
-              <span data-i18n="shotCount">镜头数量</span>
-              <select id="multiShotCount" name="multiShotCount">
-                <option value="1">1</option>
-                <option value="2" selected>2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-              </select>
-            </label>
+              <input id="templateSummary" type="hidden" value="" />
+            </form>
 
-            <section id="singleModeFields" class="single-workspace">
-              <div class="grid two" id="imageInputGrid">
-                <label id="firstFrameField">
-                  <span data-i18n="firstFrame">首帧图片</span>
-                  <input id="firstFrame" name="firstFrame" type="file" accept="image/*" />
-                </label>
-                <label id="lastFrameField">
-                  <span data-i18n="lastFrame">尾帧图片</span>
-                  <input id="lastFrame" name="lastFrame" type="file" accept="image/*" />
-                </label>
-              </div>
-
-              <div class="grid one" id="videoInputGrid" hidden>
-                <label id="referenceVideoField">
-                  <span data-i18n="referenceVideo">参考视频</span>
-                  <input id="referenceVideo" name="referenceVideo" type="file" accept="video/*" />
-                </label>
-              </div>
-
-              <label class="prompt-card hero-prompt-card">
-                <span data-i18n="prompt">提示词</span>
-                <textarea
-                  id="prompt"
-                  name="prompt"
-                  rows="8"
-                  data-i18n-placeholder="singlePromptPlaceholder"
-                  placeholder="在这里明确描述镜头运动、节奏、风格、镜头语言和终态。"
-                ></textarea>
-                <div class="prompt-presets" data-preset-target="prompt"></div>
-              </label>
-
-              <div class="creation-meta-row">
-                <label>
-                  <span data-i18n="videoName">视频名称</span>
-                  <input id="videoName" name="videoName" type="text" list="videoNameSuggestions" data-i18n-placeholder="videoNamePlaceholder" placeholder="例如：视频 1" />
-                  <datalist id="videoNameSuggestions"></datalist>
-                </label>
-                <label>
-                  <span data-i18n="shotNumber">镜头编号</span>
-                  <input id="shotNumber" name="shotNumber" type="text" data-i18n-placeholder="shotNumberPlaceholder" placeholder="例如：1" />
-                </label>
-              </div>
-            </section>
-
-            <section class="play-mode-panel">
-              <div class="play-mode-head">
-                <div>
-                  <h3 data-i18n="advancedWorkflow">高级工作流</h3>
-                  <p class="field-tip" data-i18n="multiEntryHelp">默认先走单镜头生成；需要复杂分镜时再进入多镜头编辑。</p>
+            <section class="content-page library-page" data-page="templates" hidden>
+              <div class="page-card">
+                <div class="page-card-head">
+                  <div>
+                    <span class="section-kicker">Templates</span>
+                    <h2>模板中心</h2>
+                    <p>选择成熟创作模板，一键回填到视频生成工作台。</p>
+                  </div>
+                  <button class="ghost" type="button" data-view="studio">返回工作台</button>
                 </div>
-                <button id="openMultiShotBtn" class="ghost" type="button" data-i18n="openMultiShot">多镜头编辑</button>
+
+                <div class="template-library-hero">
+                  <div class="template-library-copy">
+                    <strong>推荐工作流</strong>
+                    <p>先用模板快速建立视频骨架，再进入工作台微调提示词、素材和参数。</p>
+                  </div>
+                  <div class="template-library-badges">
+                    <span>回填模型</span>
+                    <span>回填提示词</span>
+                    <span>回填比例</span>
+                  </div>
+                </div>
+
+                <div id="templatePresetGrid" class="template-library-grid"></div>
+                <div id="workflowTemplateGrid" class="workflow-library-grid"></div>
               </div>
             </section>
 
-            <section id="multiModeFields" class="multi-editor-panel" hidden>
-              <div class="multi-mode-head multi-editor-head">
-                <button id="closeMultiShotBtn" class="ghost" type="button" data-i18n="backToSingle">返回单镜头</button>
-                <h3 data-i18n="multiShotConfig">多镜头配置</h3>
-                <p data-i18n="multiShotHelp">每个镜头独立设置首尾帧、时长和提示词；系统会自动在相邻镜头间插入 4 秒转场视频。</p>
+            <section class="content-page library-page" data-page="assets" hidden>
+              <div class="page-card">
+                <div class="page-card-head">
+                  <div>
+                    <span class="section-kicker">Assets</span>
+                    <h2>我的素材</h2>
+                    <p id="assetPanelContext">管理本地素材，支持回填到首帧、尾帧和参考视频。</p>
+                  </div>
+                  <div class="page-head-actions">
+                    <button id="assetUploadBtn" class="primary-action small" type="button">上传素材</button>
+                    <button class="ghost" type="button" data-view="studio">返回工作台</button>
+                  </div>
+                </div>
+
+                <input id="assetUploadInput" type="file" accept="image/*,video/*" multiple hidden />
+
+                <div class="asset-toolbar">
+                  <div class="asset-toolbar-copy">
+                    <strong>本地素材面板</strong>
+                    <p>素材仅保存在当前浏览器环境中，适合快速回填创作工作区。</p>
+                  </div>
+                  <div class="asset-toolbar-actions">
+                    <select id="assetTypeFilter" class="task-filter" aria-label="Asset type filter">
+                      <option value="all">全部素材</option>
+                      <option value="image">图片</option>
+                      <option value="video">视频</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div id="assetGrid" class="asset-grid"></div>
               </div>
-              <div class="multi-editor-toolbar">
-                <label>
-                  <span data-i18n="shotCount">镜头数量</span>
-                  <select id="multiShotCountMirror">
-                    <option value="1">1</option>
-                    <option value="2" selected>2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                  </select>
-                </label>
-              </div>
-              <div id="multiShotsContainer" class="multi-shots"></div>
             </section>
 
-            <details class="output-panel advanced-panel">
-              <summary data-i18n="outputSettings">输出设置</summary>
-              <div class="grid output-grid">
-                <label>
-                  <span data-i18n="ratio">视频比例</span>
-                  <select id="ratio" name="ratio">
-                    <option value="21:9">21:9</option>
-                    <option value="16:9" selected>16:9</option>
-                    <option value="9:16">9:16</option>
-                    <option value="1:1">1:1</option>
-                  </select>
-                </label>
-                <label>
-                  <span data-i18n="resolution">分辨率</span>
-                  <select id="resolution" name="resolution">
-                    <option value="720p">720p</option>
-                    <option value="1080p" selected>1080p</option>
-                  </select>
-                </label>
-                <label>
-                  <span>FPS</span>
-                  <select id="fps" name="fps">
-                    <option value="12">12</option>
-                    <option value="24">24</option>
-                    <option value="25">25</option>
-                    <option value="30" selected>30</option>
-                  </select>
-                </label>
-                <label>
-                  <span data-i18n="duration">时长（秒）</span>
-                  <input id="duration" name="duration" type="number" min="4" max="30" value="4" />
-                </label>
-                <label>
-                  <span data-i18n="seed">随机种子</span>
-                  <input id="seed" name="seed" type="number" data-i18n-placeholder="optional" placeholder="可选" />
-                </label>
-                <label class="checkbox">
-                  <span data-i18n="watermark">水印</span>
-                  <input id="watermark" name="watermark" type="checkbox" />
-                </label>
-                <label class="checkbox">
-                  <span data-i18n="generateAudio">生成音频</span>
-                  <input id="generateAudio" name="generateAudio" type="checkbox" />
-                </label>
-                <label>
-                  <span data-i18n="submitStrategy">提交策略</span>
-                  <input id="modeSummary" type="text" value="Seedance 2.0 基线模式" disabled />
-                </label>
+            <section class="content-page library-page" data-page="models" hidden>
+              <div class="page-card">
+                <div class="page-card-head">
+                  <div>
+                    <span class="section-kicker">Models</span>
+                    <h2>模型市场</h2>
+                    <p>查看当前已接入模型能力，并一键切回工作台开始创作。</p>
+                  </div>
+                  <button class="ghost" type="button" data-view="studio">返回工作台</button>
+                </div>
+
+                <div id="modelMarketGrid" class="model-market-grid"></div>
               </div>
-            </details>
+            </section>
+          </section>
 
-            <div class="actions main-actions">
-              <button type="submit" id="submitBtn" data-i18n="generateVideo">生成视频</button>
-              <span id="formStatus" class="form-status"></span>
+          <aside class="task-panel">
+            <div class="task-panel-head">
+              <div>
+                <h2 data-i18n="jobStatus">任务状态</h2>
+                <p>常驻追踪当前生成进度与结果</p>
+              </div>
+              <div class="task-head-actions">
+                <select id="taskFilter" class="task-filter" aria-label="Task filter">
+                  <option value="all">全部状态</option>
+                  <option value="running">进行中</option>
+                  <option value="done">已完成</option>
+                  <option value="error">失败</option>
+                </select>
+                <button id="refreshBtn" class="icon-button" type="button" data-i18n="refresh">刷新</button>
+              </div>
             </div>
-          </form>
-        </section>
 
-        <aside class="panel jobs-panel">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Tasks</p>
-              <h2 data-i18n="jobStatus">任务状态</h2>
+            <div class="task-stats-grid">
+              <article class="task-stat-card">
+                <span>全部任务</span>
+                <strong id="jobCountTotalDisplay">0</strong>
+              </article>
+              <article class="task-stat-card">
+                <span>进行中</span>
+                <strong id="jobCountRunning">0</strong>
+              </article>
+              <article class="task-stat-card">
+                <span>已完成</span>
+                <strong id="jobCountDone">0</strong>
+              </article>
+              <article class="task-stat-card">
+                <span>失败</span>
+                <strong id="jobCountError">0</strong>
+              </article>
             </div>
-            <button id="refreshBtn" class="ghost" type="button" data-i18n="refresh">刷新</button>
-          </div>
-          <div id="jobs" class="jobs"></div>
-        </aside>
+
+            <div id="jobs" class="jobs"></div>
+          </aside>
+        </div>
       </section>
-
-      <details class="panel bottom-advanced-panel">
-        <summary class="bottom-advanced-summary">
-          <span class="eyebrow">Advanced</span>
-          <strong data-i18n="advancedConfig">高级配置</strong>
-        </summary>
-        <div class="advanced-tablist" role="tablist" aria-label="Advanced panels">
-          <button type="button" class="advanced-tab active" data-advanced-tab="local" data-i18n="localSettings">本地设置</button>
-          <button type="button" class="advanced-tab" data-advanced-tab="api">API 配置</button>
-          <button type="button" class="advanced-tab" data-advanced-tab="cost">成本配置</button>
-          <button type="button" class="advanced-tab" data-advanced-tab="json">高级 JSON</button>
-          <button type="button" class="advanced-tab" data-advanced-tab="debug">调试接口</button>
-        </div>
-        <div class="advanced-tab-panels">
-          <section class="advanced-tab-panel active" data-advanced-panel="local">
-            <div class="grid two advanced-grid">
-              <div class="advanced-info-card">
-                <span class="advanced-info-label" data-i18n="currentDownloadLocation">当前下载位置</span>
-                <strong id="configuredDownloadDir" class="path-display">默认下载目录</strong>
-                <p id="projectFolderStatus" class="field-tip" data-i18n="usingDefaultDownloadDir">当前未指定自定义目录，任务视频会保存到默认下载目录。</p>
-              </div>
-              <div class="advanced-info-card">
-                <span class="advanced-info-label" data-i18n="defaultDownloadLocation">默认下载目录</span>
-                <strong id="downloadDirPath" class="path-display">-</strong>
-                <div class="advanced-actions">
-                  <button id="projectFolderBtn" class="ghost" type="button" data-i18n="chooseDownloadDir">选择下载目录</button>
-                  <button id="resetProjectFolderBtn" class="ghost" type="button" data-i18n="resetDownloadDir">恢复默认目录</button>
-                  <button id="openDownloadsPanelBtn" class="ghost" type="button" data-i18n="openDownloads">打开下载目录</button>
-                </div>
-              </div>
-            </div>
-          </section>
-          <section class="advanced-tab-panel" data-advanced-panel="api">
-            <div class="grid three advanced-grid">
-              <label>
-                <span>API Key</span>
-                <input id="apiKey" name="apiKey" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="输入一次后可保存" required />
-              </label>
-              <label>
-                <span data-i18n="createEndpoint">创建任务接口</span>
-                <input
-                  id="createEndpoint"
-                  name="createEndpoint"
-                  type="url"
-                  value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
-                  required
-                />
-              </label>
-              <label>
-                <span data-i18n="queryEndpoint">查询任务接口模板</span>
-                <input
-                  id="queryEndpointTemplate"
-                  name="queryEndpointTemplate"
-                  type="text"
-                  value="https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/{task_id}"
-                  required
-                />
-              </label>
-            </div>
-          </section>
-          <section class="advanced-tab-panel" data-advanced-panel="cost">
-            <div class="grid two advanced-grid">
-              <label>
-                <span data-i18n="tokenPriceCnyPerK">单价（元 / 千 Token）</span>
-                <input
-                  id="tokenPriceCnyPerK"
-                  name="tokenPriceCnyPerK"
-                  type="number"
-                  min="0"
-                  step="0.001"
-                  value="0.016"
-                />
-              </label>
-              <div class="advanced-info-card">
-                <span class="advanced-info-label">估算说明</span>
-                <p>当前按 `总 Token / 1000 * 单价` 进行本地估算，默认 0.016 元 / 千 Token。</p>
-              </div>
-            </div>
-          </section>
-          <section class="advanced-tab-panel" data-advanced-panel="json">
-            <label class="advanced-field">
-              <span data-i18n="extraParams">额外参数 JSON</span>
-              <textarea
-                id="extraParams"
-                name="extraParams"
-                rows="6"
-                data-i18n-placeholder="extraParamsPlaceholder"
-                placeholder='例如：{"return_last_frame": true}'
-              ></textarea>
-            </label>
-          </section>
-          <section class="advanced-tab-panel" data-advanced-panel="debug">
-            <div class="grid two advanced-grid">
-              <div class="advanced-info-card">
-                <span class="advanced-info-label">请求预览</span>
-                <pre id="requestPreview" class="debug-pre">{}</pre>
-              </div>
-              <div class="advanced-info-card">
-                <span class="advanced-info-label">调试说明</span>
-                <pre id="endpointPreview" class="debug-pre">等待配置...</pre>
-              </div>
-            </div>
-            <div class="grid one advanced-grid">
-              <label>
-                <span data-i18n="pollInterval">轮询间隔（毫秒）</span>
-                <input id="pollIntervalMs" name="pollIntervalMs" type="number" min="1000" step="1000" value="6000" />
-              </label>
-            </div>
-          </section>
-        </div>
-      </details>
     </main>
 
     <template id="job-template">
-      <details class="job-card">
-        <summary class="job-summary">
+      <article class="job-card">
+        <div class="job-summary" role="button" tabindex="0" aria-expanded="false">
           <div class="job-top">
             <div>
               <div class="job-status-row">
@@ -381,8 +584,9 @@
             <div class="job-time"></div>
           </div>
           <div class="job-compact-meta"></div>
-        </summary>
-        <div class="job-body">
+          <div class="job-progress-bar"><span class="job-progress-fill"></span></div>
+        </div>
+        <div class="job-body" hidden>
           <div class="job-preview-wrap">
             <video class="job-preview" controls playsinline preload="metadata"></video>
           </div>
@@ -394,7 +598,7 @@
             <pre class="job-json"></pre>
           </details>
         </div>
-      </details>
+      </article>
     </template>
 
     <template id="multi-shot-template">

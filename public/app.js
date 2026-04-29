@@ -45,6 +45,24 @@ const lastFrameField = document.getElementById("lastFrameField");
 const videoInputGrid = document.getElementById("videoInputGrid");
 const requestPreview = document.getElementById("requestPreview");
 const endpointPreview = document.getElementById("endpointPreview");
+const submitTopBtn = document.getElementById("submitTopBtn");
+const taskFilter = document.getElementById("taskFilter");
+const topbarTitle = document.getElementById("topbarTitle");
+const topbarSubtitle = document.getElementById("topbarSubtitle");
+const templatePresetGrid = document.getElementById("templatePresetGrid");
+const workflowTemplateGrid = document.getElementById("workflowTemplateGrid");
+const assetGrid = document.getElementById("assetGrid");
+const assetUploadBtn = document.getElementById("assetUploadBtn");
+const assetUploadInput = document.getElementById("assetUploadInput");
+const assetTypeFilter = document.getElementById("assetTypeFilter");
+const assetPanelContext = document.getElementById("assetPanelContext");
+const modelMarketGrid = document.getElementById("modelMarketGrid");
+const contentPages = Array.from(document.querySelectorAll("[data-page]"));
+
+const VIEW_KEY = "ai-rider-view";
+const ASSET_DB_NAME = "ai-rider-assets";
+const ASSET_DB_VERSION = 1;
+const ASSET_STORE_NAME = "assets";
 
 const TEMPLATE_DEFINITIONS = {
   first_last_frame: {
@@ -91,6 +109,84 @@ const TEMPLATE_DEFINITIONS = {
     recommendedModel: "Seedance 2.0",
     inputTagKeys: ["inputTagVideo", "inputTagText"],
     requires: { prompt: true, firstFrame: false, lastFrame: false, video: true },
+  },
+};
+
+const TEMPLATE_PRESET_DEFINITIONS = [
+  {
+    id: "urban-night-chase",
+    title: "未来都市穿梭镜头",
+    description: "城市高空穿梭与霓虹光影，适合科技感与速度感表达。",
+    templateId: "first_last_frame",
+    modelId: "doubao-seedance-2-0-260128",
+    videoName: "未来都市穿梭镜头",
+    shotNumber: "8",
+    prompt: "镜头从高空掠过未来都市街区，霓虹灯牌和悬浮车道快速向后掠去，画面节奏紧凑，光影层次丰富，结尾停在主角面前的城市核心区。",
+    ratio: "16:9",
+    resolution: "1080p",
+    duration: 5,
+    tags: ["都市", "高速运动", "霓虹"],
+  },
+  {
+    id: "forest-stream",
+    title: "森林溪流流动镜头",
+    description: "慢镜头氛围模板，适合自然、治愈、写实类视频。",
+    templateId: "first_last_frame",
+    modelId: "doubao-seedance-1-5-pro-251215",
+    videoName: "森林溪流流动镜头",
+    shotNumber: "3",
+    prompt: "镜头沿着林间溪流缓慢前行，晨雾和斑驳阳光在水面上流动，空气湿润，整体氛围安静自然，结尾落在溪边石头与微波纹理上。",
+    ratio: "16:9",
+    resolution: "1080p",
+    duration: 6,
+    tags: ["自然", "治愈", "慢节奏"],
+  },
+  {
+    id: "galaxy-pan",
+    title: "星云银河推进镜头",
+    description: "适合宇宙、科幻、史诗氛围的视觉模板。",
+    templateId: "text_to_video",
+    modelId: "doubao-seedance-2-0-fast-260128",
+    videoName: "星云银河推进镜头",
+    shotNumber: "1",
+    prompt: "镜头穿过深邃星云并缓慢推进到旋转银河核心，尘埃粒子细腻发光，整体色彩克制而震撼，强调空间纵深和史诗感。",
+    ratio: "21:9",
+    resolution: "1080p",
+    duration: 5,
+    tags: ["宇宙", "史诗", "科幻"],
+  },
+  {
+    id: "mountain-extension",
+    title: "山脉日出延展镜头",
+    description: "为已有视频做延展续写，保持原片氛围不跳脱。",
+    templateId: "video_extension",
+    modelId: "doubao-seedance-2-0-260128",
+    videoName: "山脉日出延展镜头",
+    shotNumber: "12",
+    prompt: "延续原始山脉清晨镜头的光线与运动趋势，日出逐渐推亮远山云层，镜头运动自然衔接，不突兀不跳轴。",
+    ratio: "16:9",
+    resolution: "1080p",
+    duration: 5,
+    tags: ["延展", "日出", "自然风光"],
+  },
+];
+
+const VIEW_DEFINITIONS = {
+  studio: {
+    title: "视频生成工作台",
+    subtitle: "高效的 AI 视频创作平台",
+  },
+  templates: {
+    title: "模板中心",
+    subtitle: "选择成熟模板，快速回填主工作区开始创作。",
+  },
+  assets: {
+    title: "我的素材",
+    subtitle: "集中管理首帧、尾帧和参考视频素材。",
+  },
+  models: {
+    title: "模型市场",
+    subtitle: "查看已接入模型能力，按场景选择合适的视频模型。",
   },
 };
 
@@ -216,6 +312,7 @@ const I18N = {
     extraParams: "额外参数 JSON",
     extraParamsHelp: "用于透传账号或模型特有字段",
     extraParamsPlaceholder: "例如：{\"return_last_frame\": true}",
+    invalidExtraParams: "额外参数 JSON 格式错误，请检查后重试。",
     advancedConfig: "高级配置",
     createEndpoint: "创建任务接口",
     queryEndpoint: "查询任务接口模板",
@@ -344,6 +441,7 @@ const I18N = {
     extraParams: "Extra JSON params",
     extraParamsHelp: "Pass through account or model-specific fields",
     extraParamsPlaceholder: "Example: {\"return_last_frame\": true}",
+    invalidExtraParams: "Extra params JSON is invalid. Please fix it and try again.",
     advancedConfig: "Advanced",
     createEndpoint: "Create task endpoint",
     queryEndpoint: "Query task endpoint template",
@@ -416,11 +514,18 @@ let meta = { models: {}, defaults: {} };
 let projectDirectoryHandle = null;
 const syncedProjectJobs = new Set();
 let openJobId = null;
+let shouldScrollOpenedJobIntoView = false;
 let jobsRefreshTimer = null;
 let isPreviewPlaying = false;
 let pendingSubmissions = 0;
 let currentLanguage = localStorage.getItem(LANGUAGE_KEY) || "zh";
 const MAX_RENDERED_JOBS = 20;
+let latestJobs = [];
+let currentView = localStorage.getItem(VIEW_KEY) || "studio";
+let activeNavKey = currentView;
+let assetPickerTarget = null;
+let assetsCache = [];
+let assetDbPromise = null;
 
 function $(id) {
   return document.getElementById(id);
@@ -455,6 +560,23 @@ function getSupportedTemplatesForModel(model) {
   return Object.values(TEMPLATE_DEFINITIONS).filter((template) => modelSupportsTemplate(model, template));
 }
 
+function getViewDefinition(view) {
+  return VIEW_DEFINITIONS[view] || VIEW_DEFINITIONS.studio;
+}
+
+function getAssetTargetLabel(target) {
+  switch (target) {
+    case "firstFrame":
+      return currentLanguage === "zh" ? "首帧图片" : "First frame";
+    case "lastFrame":
+      return currentLanguage === "zh" ? "尾帧图片" : "Last frame";
+    case "referenceVideo":
+      return currentLanguage === "zh" ? "参考视频" : "Reference video";
+    default:
+      return currentLanguage === "zh" ? "素材库" : "Assets";
+  }
+}
+
 function applyI18n(root = document) {
   document.documentElement.lang = currentLanguage === "zh" ? "zh-CN" : "en";
   document.title = t("appTitle");
@@ -473,9 +595,365 @@ function applyI18n(root = document) {
   renderPromptPresets(root);
   applyHelpTooltips(root);
   updateSubmitButtonState();
-  updateStatusSurface();
+  if (root === document) {
+    updateStatusSurface();
+    updateAdvancedPreview();
+    updateDownloadDirectoryUI();
+    updateTopbarForView(currentView);
+    updateNavState();
+    renderTemplatePresetLibrary();
+    renderWorkflowLibrary();
+    renderModelMarket();
+    renderAssetGrid();
+  }
+}
+
+function updateTopbarForView(view = currentView) {
+  const definition = getViewDefinition(view);
+  if (topbarTitle) topbarTitle.textContent = definition.title;
+  if (topbarSubtitle) topbarSubtitle.textContent = definition.subtitle;
+  if (submitTopBtn) {
+    submitTopBtn.textContent = view === "studio"
+      ? (currentLanguage === "zh" ? "+ 新建任务" : "+ New Task")
+      : (currentLanguage === "zh" ? "返回工作台" : "Back to Studio");
+  }
+}
+
+function updateNavState() {
+  document.querySelectorAll(".nav-item[data-view]").forEach((button) => {
+    const navKey = button.dataset.navKey || button.dataset.view;
+    button.classList.toggle("active", navKey === activeNavKey);
+  });
+}
+
+function setActiveView(view, options = {}) {
+  const nextView = VIEW_DEFINITIONS[view] ? view : "studio";
+  currentView = nextView;
+  activeNavKey = options.navKey || nextView;
+  localStorage.setItem(VIEW_KEY, currentView);
+  contentPages.forEach((page) => {
+    const isActive = page.dataset.page === currentView;
+    page.hidden = !isActive;
+    page.classList.toggle("is-active", isActive);
+  });
+  updateTopbarForView(currentView);
+  updateNavState();
+  if (currentView === "assets") {
+    renderAssetGrid();
+  }
+  if (currentView === "templates") {
+    renderTemplatePresetLibrary();
+    renderWorkflowLibrary();
+  }
+  if (currentView === "models") {
+    renderModelMarket();
+  }
+}
+
+function openAssetPicker(target) {
+  assetPickerTarget = target;
+  if (assetPanelContext) {
+    assetPanelContext.textContent = currentLanguage === "zh"
+      ? `管理本地素材，当前将回填到${getAssetTargetLabel(target)}。`
+      : `Manage local assets. The current selection will be applied to ${getAssetTargetLabel(target)}.`;
+  }
+  setActiveView("assets", { navKey: "assets" });
+}
+
+function clearAssetPickerContext() {
+  assetPickerTarget = null;
+  if (assetPanelContext) {
+    assetPanelContext.textContent = currentLanguage === "zh"
+      ? "管理本地素材，支持回填到首帧、尾帧和参考视频。"
+      : "Manage local assets for first frame, last frame, and reference video.";
+  }
+}
+
+function openAssetDatabase() {
+  if (assetDbPromise) return assetDbPromise;
+  assetDbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(ASSET_DB_NAME, ASSET_DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(ASSET_STORE_NAME)) {
+        const store = db.createObjectStore(ASSET_STORE_NAME, { keyPath: "id" });
+        store.createIndex("createdAt", "createdAt");
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  return assetDbPromise;
+}
+
+async function listStoredAssets() {
+  const db = await openAssetDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ASSET_STORE_NAME, "readonly");
+    const store = tx.objectStore(ASSET_STORE_NAME);
+    const request = store.getAll();
+    request.onsuccess = () => {
+      resolve((request.result || []).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))));
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveStoredAsset(record) {
+  const db = await openAssetDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ASSET_STORE_NAME, "readwrite");
+    tx.objectStore(ASSET_STORE_NAME).put(record);
+    tx.oncomplete = () => resolve(record);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function deleteStoredAsset(assetId) {
+  const db = await openAssetDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ASSET_STORE_NAME, "readwrite");
+    tx.objectStore(ASSET_STORE_NAME).delete(assetId);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function getFilteredAssets() {
+  const type = assetTypeFilter?.value || "all";
+  if (type === "all") return assetsCache;
+  return assetsCache.filter((asset) => asset.kind === type);
+}
+
+function isAssetCompatibleWithTarget(asset, target = assetPickerTarget) {
+  if (!target) return true;
+  if (target === "referenceVideo") return asset.kind === "video";
+  return asset.kind === "image";
+}
+
+async function dataUrlToFile(dataUrl, fileName, mimeType) {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], fileName, { type: mimeType || blob.type });
+}
+
+async function applyAssetToTarget(asset, target = assetPickerTarget) {
+  if (!target) return;
+  if (!isAssetCompatibleWithTarget(asset, target)) {
+    formStatus.textContent = currentLanguage === "zh"
+      ? `当前素材不适合回填到${getAssetTargetLabel(target)}。`
+      : `This asset is not compatible with ${getAssetTargetLabel(target)}.`;
+    return;
+  }
+  const input = $(target);
+  if (!input) return;
+  const file = await dataUrlToFile(asset.dataUrl, asset.name, asset.mimeType);
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  input.files = transfer.files;
+  setActiveView("studio", { navKey: "studio" });
+  clearAssetPickerContext();
+  formStatus.textContent = currentLanguage === "zh"
+    ? `已将素材回填到${getAssetTargetLabel(target)}。`
+    : `Asset applied to ${getAssetTargetLabel(target)}.`;
   updateAdvancedPreview();
-  updateDownloadDirectoryUI();
+}
+
+function renderAssetGrid() {
+  if (!assetGrid) return;
+  const assets = getFilteredAssets();
+  assetGrid.innerHTML = "";
+
+  if (!assets.length) {
+    assetGrid.innerHTML = `<div class="empty-state-card"><strong>${currentLanguage === "zh" ? "还没有素材" : "No assets yet"}</strong><p>${currentLanguage === "zh" ? "先上传几张首尾帧或参考视频，之后就能直接回填工作区。" : "Upload images or videos first, then reuse them in the studio."}</p></div>`;
+    return;
+  }
+
+  for (const asset of assets) {
+    const card = document.createElement("article");
+    card.className = `asset-card${isAssetCompatibleWithTarget(asset) ? "" : " incompatible"}`;
+
+    const preview = document.createElement(asset.kind === "video" ? "video" : "img");
+    preview.className = "asset-preview";
+    if (asset.kind === "video") {
+      preview.src = asset.dataUrl;
+      preview.muted = true;
+      preview.playsInline = true;
+      preview.controls = true;
+    } else {
+      preview.src = asset.dataUrl;
+      preview.alt = asset.name;
+    }
+    card.appendChild(preview);
+
+    const meta = document.createElement("div");
+    meta.className = "asset-card-meta";
+    meta.innerHTML = `<strong>${asset.name}</strong><span>${asset.kind === "video" ? "Video" : "Image"} · ${Math.max(1, Math.round(asset.size / 1024))} KB</span>`;
+    card.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "asset-card-actions";
+
+    const applyButton = document.createElement("button");
+    applyButton.type = "button";
+    applyButton.className = "primary-action small";
+    applyButton.textContent = assetPickerTarget
+      ? (currentLanguage === "zh" ? `用于${getAssetTargetLabel(assetPickerTarget)}` : `Use for ${getAssetTargetLabel(assetPickerTarget)}`)
+      : (currentLanguage === "zh" ? "回填工作区" : "Apply");
+    applyButton.disabled = !isAssetCompatibleWithTarget(asset);
+    applyButton.addEventListener("click", async () => {
+      await applyAssetToTarget(asset);
+    });
+    actions.appendChild(applyButton);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "ghost";
+    deleteButton.textContent = currentLanguage === "zh" ? "删除素材" : "Delete";
+    deleteButton.addEventListener("click", async () => {
+      await deleteStoredAsset(asset.id);
+      await loadAssets();
+    });
+    actions.appendChild(deleteButton);
+
+    card.appendChild(actions);
+    assetGrid.appendChild(card);
+  }
+}
+
+async function loadAssets() {
+  assetsCache = await listStoredAssets();
+  renderAssetGrid();
+}
+
+async function ingestAssetFiles(fileList) {
+  const files = Array.from(fileList || []);
+  for (const file of files) {
+    const kind = file.type.startsWith("video/") ? "video" : "image";
+    const dataUrl = await fileToDataUrl(file);
+    await saveStoredAsset({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      name: file.name,
+      kind,
+      mimeType: file.type,
+      size: file.size,
+      dataUrl,
+      createdAt: new Date().toISOString(),
+    });
+  }
+  await loadAssets();
+}
+
+function applyTemplatePreset(preset) {
+  if (preset.modelId && meta.models?.[preset.modelId]) {
+    modelSelect.value = preset.modelId;
+    updateModelTip();
+  }
+  generationTemplateSelect.value = preset.templateId;
+  updateTemplateUI();
+  $("videoName").value = preset.videoName || "";
+  $("shotNumber").value = preset.shotNumber || "";
+  $("prompt").value = preset.prompt || "";
+  $("ratio").value = preset.ratio || $("ratio").value;
+  $("resolution").value = preset.resolution || $("resolution").value;
+  $("duration").value = normalizeDuration(preset.duration || $("duration").value);
+  updateAdvancedPreview();
+  setActiveView("studio", { navKey: "studio" });
+  formStatus.textContent = currentLanguage === "zh"
+    ? `已回填模板：${preset.title}`
+    : `Template applied: ${preset.title}`;
+}
+
+function renderTemplatePresetLibrary() {
+  if (!templatePresetGrid) return;
+  templatePresetGrid.innerHTML = "";
+  for (const preset of TEMPLATE_PRESET_DEFINITIONS) {
+    const card = document.createElement("article");
+    card.className = "template-preset-card";
+    const tags = (preset.tags || []).map((tag) => `<span>${tag}</span>`).join("");
+    card.innerHTML = `
+      <div class="template-preset-cover"></div>
+      <div class="template-preset-body">
+        <strong>${preset.title}</strong>
+        <p>${preset.description}</p>
+        <div class="template-preset-tags">${tags}</div>
+      </div>
+    `;
+    const actions = document.createElement("div");
+    actions.className = "template-preset-actions";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "primary-action small";
+    button.textContent = currentLanguage === "zh" ? "应用到工作台" : "Apply";
+    button.addEventListener("click", () => applyTemplatePreset(preset));
+    actions.appendChild(button);
+    card.appendChild(actions);
+    templatePresetGrid.appendChild(card);
+  }
+}
+
+function renderWorkflowLibrary() {
+  if (!workflowTemplateGrid) return;
+  workflowTemplateGrid.innerHTML = "";
+  const currentModel = meta.models?.[modelSelect.value];
+  const supportedTemplates = getSupportedTemplatesForModel(currentModel);
+  for (const template of supportedTemplates) {
+    const card = document.createElement("article");
+    card.className = "workflow-card";
+    card.innerHTML = `
+      <strong>${t(template.labelKey)}</strong>
+      <p>${t(template.tipKey)}</p>
+      <span>${t(template.summaryKey)}</span>
+    `;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "ghost";
+    button.textContent = currentLanguage === "zh" ? "切换到此流程" : "Use workflow";
+    button.addEventListener("click", () => {
+      generationTemplateSelect.value = template.id;
+      updateTemplateUI();
+      setActiveView("studio", { navKey: "studio" });
+    });
+    card.appendChild(button);
+    workflowTemplateGrid.appendChild(card);
+  }
+}
+
+function renderModelMarket() {
+  if (!modelMarketGrid) return;
+  modelMarketGrid.innerHTML = "";
+  const activeModels = Object.values(meta.models || {}).filter((model) => model.status !== "planned");
+  for (const model of activeModels) {
+    const card = document.createElement("article");
+    card.className = `model-market-card${modelSelect.value === model.id ? " selected" : ""}`;
+    const modes = (model.modeLabels || []).map((mode) => `<span>${mode}</span>`).join("");
+    card.innerHTML = `
+      <div class="model-market-head">
+        <div>
+          <strong>${model.label}</strong>
+          <p>${model.id}</p>
+        </div>
+        <span class="model-market-provider">${model.provider}</span>
+      </div>
+      <div class="model-market-tags">${modes}</div>
+      <p class="model-market-copy">${(model.taskTypeLabels || []).join(" / ")}</p>
+    `;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "primary-action small";
+    button.textContent = currentLanguage === "zh" ? "用此模型创作" : "Create with this model";
+    button.addEventListener("click", () => {
+      modelSelect.value = model.id;
+      updateModelTip();
+      renderModelMarket();
+      setActiveView("studio", { navKey: "studio" });
+      formStatus.textContent = currentLanguage === "zh"
+        ? `已切换模型：${model.label}`
+        : `Model selected: ${model.label}`;
+    });
+    card.appendChild(button);
+    modelMarketGrid.appendChild(card);
+  }
 }
 
 function getHelpText(key) {
@@ -623,6 +1101,7 @@ function refreshTemplateOptions() {
   }
 
   updateTemplateUI();
+  renderWorkflowLibrary();
 }
 
 function updateTemplateUI() {
@@ -647,6 +1126,7 @@ function updateTemplateUI() {
   renderCurrentModelTags();
   updateGenerationModeUI();
   updateAdvancedPreview();
+  renderWorkflowLibrary();
 }
 
 function renderTemplateCards() {
@@ -669,7 +1149,9 @@ function renderTemplateCards() {
 
     const summary = document.createElement("div");
     summary.className = "template-card-summary";
-    summary.textContent = t(template.summaryKey);
+    summary.textContent = template.id === "first_last_frame"
+      ? "First + Last Frame"
+      : t(template.labelKey);
     button.appendChild(summary);
 
     const tags = document.createElement("div");
@@ -731,6 +1213,27 @@ async function fileToDataUrl(file) {
 
 function prettyJson(data) {
   return JSON.stringify(data ?? {}, null, 2);
+}
+
+function normalizeJobFilterValue(value) {
+  return ["all", "running", "done", "error"].includes(value) ? value : "all";
+}
+
+function matchesFilter(job, filterValue) {
+  if (filterValue === "all") return true;
+  const normalized = String(job.status || "").toUpperCase();
+  if (filterValue === "done") {
+    return ["SUCCEEDED", "SUCCESS", "DONE", "COMPLETED"].includes(normalized);
+  }
+  if (filterValue === "error") {
+    return ["FAILED", "ERROR", "CANCELED", "CANCELLED"].includes(normalized);
+  }
+  return !["SUCCEEDED", "SUCCESS", "DONE", "COMPLETED", "FAILED", "ERROR", "CANCELED", "CANCELLED"].includes(normalized);
+}
+
+function getVisibleJobs(jobs = latestJobs) {
+  const filterValue = normalizeJobFilterValue(taskFilter?.value || "all");
+  return jobs.filter((job) => matchesFilter(job, filterValue));
 }
 
 function statusClass(status) {
@@ -829,11 +1332,10 @@ function buildLocalMediaUrl(jobId) {
 }
 
 function renderJobs(jobs) {
-  updateJobCounts(jobs);
   jobsContainer.innerHTML = "";
 
   if (!jobs.length) {
-    jobsContainer.innerHTML = `<div class="job-card"><div class="job-meta">${t("noJobs")}</div></div>`;
+    jobsContainer.innerHTML = `<div class="job-card job-empty"><div class="job-meta">${t("noJobs")}</div></div>`;
     return;
   }
 
@@ -853,9 +1355,11 @@ function renderJobs(jobs) {
     const prompt = node.querySelector(".job-prompt");
     const time = node.querySelector(".job-time");
     const compactMeta = node.querySelector(".job-compact-meta");
+    const progressFill = node.querySelector(".job-progress-fill");
     const metaText = node.querySelector(".job-meta");
     const links = node.querySelector(".job-links");
     const errorActions = node.querySelector(".job-error-actions");
+    const body = node.querySelector(".job-body");
     const previewWrap = node.querySelector(".job-preview-wrap");
     const preview = node.querySelector(".job-preview");
     const json = node.querySelector(".job-json");
@@ -863,6 +1367,10 @@ function renderJobs(jobs) {
     badge.textContent = job.status;
     badge.classList.add(statusClass(job.status));
     progress.textContent = `进度: ${formatProgress(job)}`;
+    if (progressFill) {
+      const numericProgress = Number.parseFloat(String(formatProgress(job)).replace("%", ""));
+      progressFill.style.width = `${Number.isFinite(numericProgress) ? Math.max(0, Math.min(100, numericProgress)) : 0}%`;
+    }
     const titleParts = [job.videoName || "未命名视频", job.shotNumber ? `镜头 ${job.shotNumber}` : ""].filter(Boolean);
     prompt.textContent = titleParts.join(" | ") || "未填写提示词";
     time.textContent = new Date(job.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -872,6 +1380,14 @@ function renderJobs(jobs) {
       chip.className = "job-meta-chip";
       chip.innerHTML = `<em>${item.label}</em><strong>${item.value}</strong>`;
       compactMeta.appendChild(chip);
+    }
+    if (job.error) {
+      const err = document.createElement("span");
+      err.className = "job-summary-error";
+      const maxLen = 60;
+      const truncated = job.error.length > maxLen ? `${job.error.slice(0, maxLen)}...` : job.error;
+      err.textContent = truncated;
+      summary.appendChild(err);
     }
     metaText.textContent = makeMeta(job);
 
@@ -898,12 +1414,22 @@ function renderJobs(jobs) {
       preview.removeAttribute("src");
     }
 
-    node.open = isOpen;
+    node.classList.toggle("is-open", isOpen);
+    summary.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    body.hidden = !isOpen;
 
-    summary.addEventListener("click", (event) => {
-      event.preventDefault();
-      openJobId = openJobId === job.id ? job.id : job.id;
+    const toggleOpen = () => {
+      shouldScrollOpenedJobIntoView = openJobId !== job.id;
+      openJobId = openJobId === job.id ? null : job.id;
       renderJobs(jobs);
+    };
+
+    summary.addEventListener("click", toggleOpen);
+    summary.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleOpen();
+      }
     });
 
     if (job.videoUrl) {
@@ -962,6 +1488,12 @@ function renderJobs(jobs) {
 
     applyI18n(node);
     jobsContainer.appendChild(node);
+    if (isOpen && shouldScrollOpenedJobIntoView) {
+      shouldScrollOpenedJobIntoView = false;
+      requestAnimationFrame(() => {
+        node.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    }
   }
 }
 
@@ -985,6 +1517,7 @@ function updateJobCounts(jobs = []) {
   }
 
   if ($("jobCountTotal")) $("jobCountTotal").textContent = String(totals.total);
+  if ($("jobCountTotalDisplay")) $("jobCountTotalDisplay").textContent = String(totals.total);
   if ($("jobCountRunning")) $("jobCountRunning").textContent = String(totals.running);
   if ($("jobCountDone")) $("jobCountDone").textContent = String(totals.done);
   if ($("jobCountError")) $("jobCountError").textContent = String(totals.error);
@@ -1009,7 +1542,9 @@ async function loadJobs() {
       }
     }
   }
-  renderJobs(data.jobs || []);
+  latestJobs = data.jobs || [];
+  updateJobCounts(latestJobs);
+  renderJobs(getVisibleJobs(latestJobs));
 }
 
 function startJobsPolling() {
@@ -1023,7 +1558,11 @@ function startJobsPolling() {
 
 function parseExtraParams(value) {
   if (!value.trim()) return {};
-  return JSON.parse(value);
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new Error(t("invalidExtraParams"));
+  }
 }
 
 function setTheme(theme) {
@@ -1033,8 +1572,21 @@ function setTheme(theme) {
 }
 
 function applySavedTheme() {
-  const savedTheme = localStorage.getItem(STORAGE_KEY) || "dark";
+  const savedTheme = localStorage.getItem(STORAGE_KEY) || "light";
   setTheme(savedTheme);
+}
+
+function openAdvancedTab(tabName) {
+  const panel = document.querySelector(".inline-advanced-panel");
+  if (panel && !panel.open) {
+    panel.open = true;
+  }
+  document.querySelectorAll(".advanced-tab").forEach((item) => {
+    item.classList.toggle("active", item.dataset.advancedTab === tabName);
+  });
+  document.querySelectorAll(".advanced-tab-panel").forEach((item) => {
+    item.classList.toggle("active", item.dataset.advancedPanel === tabName);
+  });
 }
 
 async function loadMeta() {
@@ -1093,6 +1645,7 @@ function updateModelTip() {
     refreshTemplateOptions();
     renderCurrentModelTags();
     updateAdvancedPreview();
+    renderModelMarket();
     return;
   }
 
@@ -1100,6 +1653,7 @@ function updateModelTip() {
   refreshTemplateOptions();
   renderCurrentModelTags();
   updateAdvancedPreview();
+  renderModelMarket();
 }
 
 function updateStatusSurface() {
@@ -1547,8 +2101,6 @@ langToggle.addEventListener("click", async () => {
   await loadJobs();
 });
 
-document.body.classList.add("header-compact");
-
 form.addEventListener("click", (event) => {
   const button = event.target.closest("[data-prompt-preset]");
   if (!button) return;
@@ -1559,6 +2111,36 @@ form.addEventListener("click", (event) => {
 
   textarea.value = t(button.dataset.promptPreset);
   textarea.focus();
+});
+
+document.addEventListener("click", (event) => {
+  const assetTrigger = event.target.closest("[data-asset-target]");
+  if (assetTrigger) {
+    openAssetPicker(assetTrigger.dataset.assetTarget);
+    return;
+  }
+
+  const viewTrigger = event.target.closest("[data-view]");
+  if (viewTrigger) {
+    const nextView = viewTrigger.dataset.view;
+    const navKey = viewTrigger.dataset.taskFilterTarget || viewTrigger.dataset.view;
+    if (viewTrigger.dataset.taskFilterTarget && taskFilter) {
+      taskFilter.value = viewTrigger.dataset.taskFilterTarget;
+      renderJobs(getVisibleJobs(latestJobs));
+    }
+    if (nextView === "studio" && !viewTrigger.dataset.taskFilterTarget) {
+      clearAssetPickerContext();
+    }
+    setActiveView(nextView, { navKey });
+    if (viewTrigger.dataset.taskFilterTarget) {
+      document.querySelector(".task-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    return;
+  }
+
+  const trigger = event.target.closest("[data-open-advanced]");
+  if (!trigger) return;
+  openAdvancedTab(trigger.dataset.openAdvanced);
 });
 
 form.addEventListener("change", (event) => {
@@ -1592,15 +2174,48 @@ if (closeMultiShotBtn) {
 
 document.querySelectorAll(".advanced-tab").forEach((button) => {
   button.addEventListener("click", () => {
-    const nextTab = button.dataset.advancedTab;
-    document.querySelectorAll(".advanced-tab").forEach((item) => {
-      item.classList.toggle("active", item === button);
-    });
-    document.querySelectorAll(".advanced-tab-panel").forEach((panel) => {
-      panel.classList.toggle("active", panel.dataset.advancedPanel === nextTab);
-    });
+    openAdvancedTab(button.dataset.advancedTab);
   });
 });
+
+if (submitTopBtn) {
+  submitTopBtn.addEventListener("click", () => {
+    if (currentView !== "studio") {
+      clearAssetPickerContext();
+      setActiveView("studio", { navKey: "studio" });
+      return;
+    }
+    submitBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+    submitBtn.focus();
+  });
+}
+
+if (taskFilter) {
+  taskFilter.addEventListener("change", () => {
+    renderJobs(getVisibleJobs(latestJobs));
+  });
+}
+
+if (assetTypeFilter) {
+  assetTypeFilter.addEventListener("change", () => {
+    renderAssetGrid();
+  });
+}
+
+if (assetUploadBtn) {
+  assetUploadBtn.addEventListener("click", () => {
+    assetUploadInput?.click();
+  });
+}
+
+if (assetUploadInput) {
+  assetUploadInput.addEventListener("change", async () => {
+    if (!assetUploadInput.files?.length) return;
+    await ingestAssetFiles(assetUploadInput.files);
+    assetUploadInput.value = "";
+    setActiveView("assets", { navKey: "assets" });
+  });
+}
 
 form.addEventListener("input", (event) => {
   if (event.target?.id === "apiKey") {
@@ -1619,13 +2234,14 @@ async function bootstrap() {
   applyI18n();
   await loadMeta();
   await loadSettings();
+  await loadAssets();
   renderMultiShots(Number(multiShotCount.value || 2));
   setGenerationMode(getGenerationMode());
   await loadJobs();
   startJobsPolling();
   updateStatusSurface();
   updateAdvancedPreview();
-  updateHeaderCompactState();
+  setActiveView(currentView, { navKey: currentView });
 }
 
 bootstrap();

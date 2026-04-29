@@ -82,6 +82,14 @@ The `2.x` line marks the shift from a single desktop tool to a structured AI vid
 - Shifted the product expression from a parameter-heavy tool to a video workbench
 - Established the current `2.1.0` stable desktop state
 
+### 2.2.0
+
+- Workspace expansion release
+- Added a clickable template center with one-click apply back to the main studio
+- Added a local asset panel for uploading, previewing, and reusing image/video materials
+- Added a model market view for capability-based model switching
+- Unified repository and runtime versioning under `2.2.0`
+
 Detailed archive:
 
 - [2.0.0 PRD Draft](./versions/2.0.0.md)
