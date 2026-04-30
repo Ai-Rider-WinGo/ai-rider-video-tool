@@ -20,5 +20,14 @@
   "projectPathLabel": "",
   "projectPaths": [],
   "generationMode": "single",
-  "multiShotCount": 2
+  "multiShotCount": 2,
+  "deviceId": "",
+  "licenseActivation": {
+    "code": "",
+    "activationToken": "",
+    "status": "inactive",
+    "activatedAt": "",
+    "remainingUses": 0,
+    "totalUses": 0
+  }
 }

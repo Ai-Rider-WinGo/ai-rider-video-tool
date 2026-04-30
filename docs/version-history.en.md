@@ -90,6 +90,18 @@ The `2.x` line marks the shift from a single desktop tool to a structured AI vid
 - Added a model market view for capability-based model switching
 - Unified repository and runtime versioning under `2.2.0`
 
+### 2.3.0
+
+- First license and activation rollout
+- Added a first-launch activation gate before entering the workbench
+- Added the WeChat-led path for trial and formal activation codes
+- Added tiered activation codes with `5 / 50 / 100 / 1000` uses
+- Added local activation, status, and consume flows in the desktop service
+- Added a license admin CLI for generation and management
+- Unified repository and runtime versioning under `2.3.0`
+
 Detailed archive:
 
 - [2.0.0 PRD Draft](./versions/2.0.0.md)
+- [2.3.0 License System Plan](./versions/2.3.0-license-system.md)
+- [2.3.0 License Technical Design](./versions/2.3.0-license-tech.md)

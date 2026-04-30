@@ -1,6 +1,6 @@
 {
   "name": "ai-rider-desktop-client",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "description": "AI-Rider first/last-frame video generation desktop tool.",
   "main": "desktop/main.js",
@@ -8,6 +8,7 @@
     "setup:desktop": "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ npm install",
     "check:env": "node scripts/check-env.js",
     "start:web": "node server.js",
+    "license:admin": "node scripts/license-admin.js",
     "start:desktop": "electron .",
     "desktop": "npm run start:desktop",
     "build:mac": "electron-builder --mac",

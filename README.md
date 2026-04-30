@@ -4,7 +4,7 @@
 
 AI-Rider Video is a desktop-first AI video workbench evolving from the original "first frame + last frame + prompt" workflow into a template-driven, multi-model creation product.
 
-Current stable version: `2.2.0`
+Current stable version: `2.3.0`
 
 ## Documentation
 
@@ -24,13 +24,13 @@ The `2.x` line is the first real product-system upgrade for AI-Rider Video.
 - `2.2.x`: workspace expansion, reusable assets, and model/template entry pages
 - `2.3.x`: commercialization and ecosystem integration
 
-The current `2.2.0` build expands the workbench into a multi-entry creation surface:
+The current `2.3.0` build extends the workbench with the first licensing and activation flow:
 
-- clickable template center with one-click preset apply
-- local asset panel with reusable image and video materials
-- model market view for capability-based model switching
-- workbench backfill flow from templates and assets into the main studio
-- task cards with clearer progress and cost summaries
+- first-launch activation gate before entering the workbench
+- WeChat-led activation-code onboarding
+- tiered codes with `5 / 50 / 100 / 1000` uses
+- successful task creation consumes one use
+- built-in license admin CLI for code generation and management
 
 ## Features
 
@@ -43,6 +43,9 @@ The current `2.2.0` build expands the workbench into a multi-entry creation surf
 - Local cost estimation based on token usage
 - Advanced panels for API endpoints, JSON passthrough, and debugging
 - Backend job creation, polling, result inspection, and local downloads
+- First-launch activation onboarding
+- License validation and remaining-use control
+- License generation, freeze, revoke, and device reset tooling
 
 ## Start
 

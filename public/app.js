@@ -58,6 +58,19 @@ const assetTypeFilter = document.getElementById("assetTypeFilter");
 const assetPanelContext = document.getElementById("assetPanelContext");
 const modelMarketGrid = document.getElementById("modelMarketGrid");
 const contentPages = Array.from(document.querySelectorAll("[data-page]"));
+const licenseGate = document.getElementById("licenseGate");
+const licenseCodeInput = document.getElementById("licenseCodeInput");
+const activateLicenseBtn = document.getElementById("activateLicenseBtn");
+const copyWechatBtn = document.getElementById("copyWechatBtn");
+const licenseGateStatus = document.getElementById("licenseGateStatus");
+const licenseGateSummary = document.getElementById("licenseGateSummary");
+const licenseGateVersion = document.getElementById("licenseGateVersion");
+const licenseQuotaText = document.getElementById("licenseQuotaText");
+const licenseQuotaBar = document.getElementById("licenseQuotaBar");
+const licenseQuotaPercent = document.getElementById("licenseQuotaPercent");
+const licensePanelStatus = document.getElementById("licensePanelStatus");
+const licensePanelQuota = document.getElementById("licensePanelQuota");
+const manageLicenseBtn = document.getElementById("manageLicenseBtn");
 
 const VIEW_KEY = "ai-rider-view";
 const ASSET_DB_NAME = "ai-rider-assets";
@@ -526,6 +539,20 @@ let activeNavKey = currentView;
 let assetPickerTarget = null;
 let assetsCache = [];
 let assetDbPromise = null;
+let licenseState = {
+  required: true,
+  activated: false,
+  activation: {
+    code: "",
+    activationToken: "",
+    status: "inactive",
+    activatedAt: "",
+    remainingUses: 0,
+    totalUses: 0,
+  },
+  device: null,
+  license: null,
+};
 
 function $(id) {
   return document.getElementById(id);
@@ -534,6 +561,98 @@ function $(id) {
 function t(key, values = {}) {
   const template = I18N[currentLanguage]?.[key] || I18N.zh[key] || key;
   return template.replace(/\{(\w+)\}/g, (_, name) => values[name] ?? "");
+}
+
+function isLicenseActivated() {
+  return Boolean(licenseState?.activated && Number(licenseState?.activation?.remainingUses || 0) > 0);
+}
+
+function getLicenseQuotaPercent() {
+  const total = Number(licenseState?.activation?.totalUses || 0);
+  const remaining = Number(licenseState?.activation?.remainingUses || 0);
+  if (!total || remaining <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((remaining / total) * 100)));
+}
+
+function getLicenseSummaryText() {
+  const activation = licenseState?.activation || {};
+  if (!licenseState?.activated) {
+    return {
+      title: currentLanguage === "zh" ? "未激活" : "Inactive",
+      body: currentLanguage === "zh"
+        ? "请先添加微信获取激活码。"
+        : "Add WeChat first to receive an activation code.",
+      status: currentLanguage === "zh"
+        ? "未激活时无法正式创建视频任务。"
+        : "Video generation is locked until activation.",
+    };
+  }
+  if (Number(activation.remainingUses || 0) <= 0) {
+    return {
+      title: currentLanguage === "zh" ? "次数已用完" : "Quota exhausted",
+      body: currentLanguage === "zh"
+        ? "当前注册码次数已用完，请联系微信续发新的激活码。"
+        : "Your current license is exhausted. Contact WeChat for a new code.",
+      status: currentLanguage === "zh"
+        ? "请更换或续发激活码后继续使用。"
+        : "Renew or replace the activation code to continue.",
+    };
+  }
+  return {
+    title: currentLanguage === "zh" ? "已激活" : "Activated",
+    body: currentLanguage === "zh"
+      ? `当前剩余 ${activation.remainingUses} / ${activation.totalUses} 次，可直接进入工作台。`
+      : `${activation.remainingUses} / ${activation.totalUses} uses remaining. You can enter the studio now.`,
+    status: currentLanguage === "zh"
+      ? "激活成功，已解锁视频生成工作台。"
+      : "Activation succeeded. The workbench is unlocked.",
+  };
+}
+
+function updateLicenseSurface() {
+  const summary = getLicenseSummaryText();
+  const activation = licenseState?.activation || {};
+  const percent = getLicenseQuotaPercent();
+
+  if (licenseGateVersion) {
+    licenseGateVersion.textContent = meta.app?.version ? `v${meta.app.version}` : "v2.3.x";
+  }
+  if (licenseGateSummary) {
+    licenseGateSummary.innerHTML = `
+      <span>${currentLanguage === "zh" ? "当前状态" : "Current status"}</span>
+      <strong>${summary.title}</strong>
+      <p>${summary.body}</p>
+    `;
+  }
+  if (licenseGateStatus) {
+    const codeText = activation.code
+      ? (currentLanguage === "zh" ? `当前注册码：${activation.code}` : `Current code: ${activation.code}`)
+      : "";
+    licenseGateStatus.textContent = [summary.status, codeText].filter(Boolean).join(" ");
+  }
+  if (licenseQuotaText) {
+    licenseQuotaText.textContent = isLicenseActivated()
+      ? `${activation.remainingUses} / ${activation.totalUses} 次`
+      : (currentLanguage === "zh" ? "未激活" : "Inactive");
+  }
+  if (licenseQuotaBar) {
+    licenseQuotaBar.style.width = `${percent}%`;
+  }
+  if (licenseQuotaPercent) {
+    licenseQuotaPercent.textContent = `${percent}%`;
+  }
+  if (licensePanelStatus) {
+    licensePanelStatus.textContent = summary.title;
+  }
+  if (licensePanelQuota) {
+    licensePanelQuota.textContent = summary.body;
+  }
+  if (licenseGate) {
+    const locked = !isLicenseActivated();
+    licenseGate.hidden = !locked;
+    document.body.classList.toggle("license-locked", locked);
+  }
+  updateSubmitButtonState();
 }
 
 function normalizeDuration(value) {
@@ -1014,9 +1133,20 @@ function renderPromptPresets(root = document) {
 }
 
 function updateSubmitButtonState() {
+  const locked = !isLicenseActivated();
+  submitBtn.disabled = locked || pendingSubmissions > 0;
   submitBtn.textContent = pendingSubmissions > 0
     ? t("creatingTaskCount", { count: pendingSubmissions })
-    : t("generateVideo");
+    : locked
+      ? (currentLanguage === "zh" ? "请先激活" : "Activate first")
+      : t("generateVideo");
+  if (submitTopBtn) {
+    submitTopBtn.textContent = locked
+      ? (currentLanguage === "zh" ? "前往激活" : "Activate")
+      : (currentView === "studio"
+          ? (currentLanguage === "zh" ? "+ 新建任务" : "+ New Task")
+          : (currentLanguage === "zh" ? "返回工作台" : "Back to Studio"));
+  }
 }
 
 function getGenerationMode() {
@@ -1316,8 +1446,10 @@ function formatProgress(job) {
 }
 
 function makeCompactMeta(job) {
+  const modelId = job.config?.model || "-";
+  const modelLabel = meta.models?.[modelId]?.label || modelId;
   const parts = [
-    { label: "模型", value: job.config?.model || "-" },
+    { label: "模型", value: modelLabel },
     { label: "进度", value: formatProgress(job) },
   ];
   const cost = estimateJobCostCny(job);
@@ -1618,8 +1750,18 @@ async function loadMeta() {
   renderCurrentModelTags();
 }
 
+async function loadLicenseStatus() {
+  const response = await fetch("/api/license/status");
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "License status load failed");
+  }
+  licenseState = data;
+  updateLicenseSurface();
+}
+
 function updateVersionBadge() {
-  const versionText = meta.app?.version ? `v${meta.app.version}` : "v2.x";
+  const versionText = meta.app?.version ? `v${meta.app.version}` : "v2.3.x";
   const versionTitle = meta.app?.versionLabel || versionText;
   const badges = [$("versionBadge"), $("compactVersionBadge")].filter(Boolean);
 
@@ -1658,12 +1800,19 @@ function updateModelTip() {
 
 function updateStatusSurface() {
   if (apiModeBadge) {
-    apiModeBadge.textContent = $("apiKey")?.value?.trim() ? "用户 API" : "免费模式";
+    if (isLicenseActivated()) {
+      apiModeBadge.textContent = $("apiKey")?.value?.trim()
+        ? (currentLanguage === "zh" ? "已激活 · 用户 API" : "Active · User API")
+        : (currentLanguage === "zh" ? "已激活 · 体验模式" : "Active · Trial");
+    } else {
+      apiModeBadge.textContent = currentLanguage === "zh" ? "未激活" : "Inactive";
+    }
   }
   const current = meta.models?.[modelSelect.value];
   if (topModelSummary) {
     topModelSummary.textContent = current?.label || "-";
   }
+  updateLicenseSurface();
 }
 
 function collectSettings(includeApiKey = true) {
@@ -1883,6 +2032,39 @@ async function submitJobPayload(payload) {
   return data;
 }
 
+async function activateCurrentDevice() {
+  const code = licenseCodeInput?.value?.trim();
+  if (!code) {
+    throw new Error(currentLanguage === "zh" ? "请输入激活码。" : "Enter an activation code.");
+  }
+  const response = await fetch("/api/license/activate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || (currentLanguage === "zh" ? "激活失败" : "Activation failed"));
+  }
+  licenseState = {
+    ...licenseState,
+    activated: true,
+    activation: {
+      code: data.license?.code || code,
+      activationToken: data.activationToken || "",
+      status: data.license?.status || "active",
+      activatedAt: data.license?.activatedAt || "",
+      remainingUses: Number(data.license?.remainingUses || 0),
+      totalUses: Number(data.license?.totalUses || 0),
+    },
+    license: data.license || null,
+  };
+  updateLicenseSurface();
+  formStatus.textContent = currentLanguage === "zh"
+    ? `激活成功，当前剩余 ${licenseState.activation.remainingUses} 次。`
+    : `Activated successfully. ${licenseState.activation.remainingUses} uses remaining.`;
+}
+
 async function buildSinglePayload() {
   const template = getSelectedTemplate();
   const firstFile = $("firstFrame").files[0];
@@ -2037,6 +2219,41 @@ saveSettingsBtn.addEventListener("click", async () => {
   }
 });
 
+if (activateLicenseBtn) {
+  activateLicenseBtn.addEventListener("click", async () => {
+    try {
+      licenseGateStatus.textContent = currentLanguage === "zh" ? "正在激活..." : "Activating...";
+      await activateCurrentDevice();
+      await saveSettings();
+      await loadLicenseStatus();
+    } catch (error) {
+      licenseGateStatus.textContent = error.message;
+    }
+  });
+}
+
+if (licenseCodeInput) {
+  licenseCodeInput.addEventListener("keydown", async (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    activateLicenseBtn?.click();
+  });
+}
+
+if (copyWechatBtn) {
+  copyWechatBtn.addEventListener("click", () => {
+    window.open("https://x.com/airidergo", "_blank", "noopener,noreferrer");
+  });
+}
+
+if (manageLicenseBtn) {
+  manageLicenseBtn.addEventListener("click", () => {
+    licenseGate.hidden = false;
+    document.body.classList.add("license-locked");
+    licenseCodeInput?.focus();
+  });
+}
+
 if (projectFolderBtn) {
   projectFolderBtn.addEventListener("click", async () => {
     await pickProjectDirectory();
@@ -2114,6 +2331,14 @@ form.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", (event) => {
+  const licenseTrigger = event.target.closest("[data-open-license]");
+  if (licenseTrigger) {
+    licenseGate.hidden = false;
+    document.body.classList.add("license-locked");
+    licenseCodeInput?.focus();
+    return;
+  }
+
   const assetTrigger = event.target.closest("[data-asset-target]");
   if (assetTrigger) {
     openAssetPicker(assetTrigger.dataset.assetTarget);
@@ -2180,6 +2405,12 @@ document.querySelectorAll(".advanced-tab").forEach((button) => {
 
 if (submitTopBtn) {
   submitTopBtn.addEventListener("click", () => {
+    if (!isLicenseActivated()) {
+      licenseGate.hidden = false;
+      document.body.classList.add("license-locked");
+      licenseCodeInput?.focus();
+      return;
+    }
     if (currentView !== "studio") {
       clearAssetPickerContext();
       setActiveView("studio", { navKey: "studio" });
@@ -2234,6 +2465,7 @@ async function bootstrap() {
   applyI18n();
   await loadMeta();
   await loadSettings();
+  await loadLicenseStatus();
   await loadAssets();
   renderMultiShots(Number(multiShotCount.value || 2));
   setGenerationMode(getGenerationMode());

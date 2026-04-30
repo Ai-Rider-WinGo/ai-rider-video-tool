@@ -1,10 +1,13 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
+const crypto = require("crypto");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
 const { URL } = require("url");
 const { getCompatibleModel, getDefaultModelId, getRegistryMeta } = require("./lib/model-registry");
+const { createLicenseStore } = require("./lib/license-store");
 const execFileAsync = promisify(execFile);
 
 const HOST = "127.0.0.1";
@@ -19,9 +22,10 @@ const DOWNLOAD_DIR = process.env.AI_RIDER_DOWNLOAD_DIR
   : path.join(ROOT_DIR, "downloads");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
+const LICENSES_FILE = path.join(DATA_DIR, "licenses.json");
 const MIN_DURATION_SECONDS = 4;
-const PRODUCT_VERSION = "2.2.0";
-const PRODUCT_VERSION_LABEL = "2.2.0 Workspace Expansion Release";
+const PRODUCT_VERSION = "2.3.0";
+const PRODUCT_VERSION_LABEL = "2.3.0 License Activation Rollout";
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
@@ -29,6 +33,7 @@ fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 const jobs = new Map();
 const jobTimers = new Map();
 const MODEL_REGISTRY_META = getRegistryMeta();
+const licenseStore = createLicenseStore({ filePath: LICENSES_FILE });
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -185,6 +190,56 @@ async function writeSettings(nextSettings) {
     projectPaths: mergeProjectPaths(current.projectPaths || [], nextSettings.projectPaths || []),
   };
   await fs.promises.writeFile(SETTINGS_FILE, JSON.stringify(merged, null, 2), "utf8");
+}
+
+async function ensureDeviceIdentity() {
+  const settings = readSettings();
+  if (settings.deviceId) return settings.deviceId;
+  const deviceId = `device_${crypto.randomUUID()}`;
+  await writeSettings({ deviceId });
+  return deviceId;
+}
+
+function getLicenseActivationSnapshot() {
+  const settings = readSettings();
+  const activation = settings.licenseActivation || {};
+  return {
+    code: activation.code || "",
+    activationToken: activation.activationToken || "",
+    status: activation.status || "inactive",
+    activatedAt: activation.activatedAt || "",
+    remainingUses: Number(activation.remainingUses || 0),
+    totalUses: Number(activation.totalUses || 0),
+  };
+}
+
+async function persistLicenseActivation(nextState) {
+  await writeSettings({
+    licenseActivation: {
+      ...getLicenseActivationSnapshot(),
+      ...nextState,
+    },
+  });
+}
+
+async function syncLocalActivationFromLicense(license, activationToken = "") {
+  await persistLicenseActivation({
+    code: license.code,
+    activationToken: activationToken || getLicenseActivationSnapshot().activationToken || "",
+    status: license.status,
+    activatedAt: license.activatedAt || "",
+    remainingUses: license.remainingUses,
+    totalUses: license.totalUses,
+  });
+}
+
+function getDeviceContext(settings = readSettings()) {
+  return {
+    deviceId: settings.deviceId || "",
+    deviceName: os.hostname(),
+    platform: process.platform,
+    appVersion: PRODUCT_VERSION,
+  };
 }
 
 function readJobsFromDisk() {
@@ -561,7 +616,7 @@ async function pollJob(job, apiKeyOverride) {
   jobTimers.set(job.id, timer);
 }
 
-async function startJob(input) {
+async function startJob(input, licenseContext = null) {
   const jobId = makeJobId();
   const { payload, mode, modelChoice, compatibilityNote } = buildCreatePayload(input);
   const now = new Date().toISOString();
@@ -621,6 +676,16 @@ async function startJob(input) {
     job.taskId = resolveTaskId(createResponse);
     job.status = resolveStatus(createResponse);
     job.updatedAt = new Date().toISOString();
+
+    if (licenseContext?.code && licenseContext?.deviceId) {
+      const updatedLicense = licenseStore.consumeLicense({
+        code: licenseContext.code,
+        deviceId: licenseContext.deviceId,
+        taskId: job.taskId,
+      });
+      await syncLocalActivationFromLicense(updatedLicense, licenseContext.activationToken);
+    }
+
     await persistJobs();
 
     if (!job.taskId) {
@@ -689,6 +754,10 @@ const server = http.createServer(async (req, res) => {
     return sendFile(req, res, path.join(PUBLIC_DIR, "ai-rider-logo.png"), "image/png");
   }
 
+  if ((req.method === "GET" || req.method === "HEAD") && pathname === "/wechat-qr.jpg") {
+    return sendFile(req, res, path.join(PUBLIC_DIR, "wechat-qr.jpg"), "image/jpeg");
+  }
+
   if (req.method === "GET" && pathname === "/api/jobs") {
     const list = Array.from(jobs.values())
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -697,10 +766,18 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && pathname === "/api/meta") {
+    const activation = getLicenseActivationSnapshot();
     return sendJson(res, 200, {
       app: {
         version: PRODUCT_VERSION,
         versionLabel: PRODUCT_VERSION_LABEL,
+      },
+      licensing: {
+        required: true,
+        status: activation.status,
+        activated: activation.status === "active",
+        remainingUses: activation.remainingUses,
+        totalUses: activation.totalUses,
       },
       registry: {
         version: MODEL_REGISTRY_META.version,
@@ -726,7 +803,148 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && pathname === "/api/settings") {
-    return sendJson(res, 200, readSettings());
+    return sendJson(res, 200, {
+      ...readSettings(),
+      licenseActivation: getLicenseActivationSnapshot(),
+    });
+  }
+
+  if (req.method === "GET" && pathname === "/api/license/status") {
+    const settings = readSettings();
+    const activation = getLicenseActivationSnapshot();
+    const activationRef = activation.activationToken
+      ? licenseStore.getActivationByToken(activation.activationToken)
+      : null;
+    return sendJson(res, 200, {
+      required: true,
+      activated: activation.status === "active",
+      activation,
+      device: getDeviceContext(settings),
+      license: activationRef?.license || null,
+    });
+  }
+
+  if (req.method === "POST" && pathname === "/api/license/activate") {
+    try {
+      const body = await readBody(req);
+      if (!body.code) {
+        return sendJson(res, 400, { error: "缺少注册码 code" });
+      }
+      const deviceId = await ensureDeviceIdentity();
+      const settings = readSettings();
+      const device = getDeviceContext({ ...settings, deviceId });
+      const result = licenseStore.activateLicense({
+        code: body.code,
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+        platform: device.platform,
+        appVersion: device.appVersion,
+      });
+      await syncLocalActivationFromLicense(result.license, result.activationToken);
+      return sendJson(res, 200, {
+        ok: true,
+        activationToken: result.activationToken,
+        license: result.license,
+      });
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+  if (req.method === "POST" && pathname === "/api/license/deactivate") {
+    try {
+      await persistLicenseActivation({
+        code: "",
+        activationToken: "",
+        status: "inactive",
+        activatedAt: "",
+        remainingUses: 0,
+        totalUses: 0,
+      });
+      return sendJson(res, 200, { ok: true });
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+
+  if (req.method === "POST" && pathname === "/api/license/consume") {
+    try {
+      const body = await readBody(req);
+      const activation = getLicenseActivationSnapshot();
+      if (activation.status !== "active" || !activation.code) {
+        return sendJson(res, 403, { error: "当前设备尚未激活" });
+      }
+      const deviceId = readSettings().deviceId || await ensureDeviceIdentity();
+      const license = licenseStore.consumeLicense({
+        code: activation.code,
+        deviceId,
+        taskId: body.taskId || "",
+        consumeType: body.consumeType || "manual_test",
+        count: body.count || 1,
+      });
+      await syncLocalActivationFromLicense(license, activation.activationToken);
+      return sendJson(res, 200, { ok: true, license });
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+  if (req.method === "GET" && pathname === "/api/admin/licenses") {
+    return sendJson(res, 200, { licenses: licenseStore.listLicenses() });
+  }
+
+  if (req.method === "GET" && pathname.startsWith("/api/admin/licenses/")) {
+    const code = decodeURIComponent(pathname.split("/").pop() || "");
+    const license = licenseStore.getLicense(code);
+    if (!license) return sendJson(res, 404, { error: "注册码不存在" });
+    return sendJson(res, 200, { license });
+  }
+
+  if (req.method === "POST" && pathname === "/api/admin/licenses/generate") {
+    try {
+      const body = await readBody(req);
+      const licenses = licenseStore.generateLicenses({
+        tier: body.tier,
+        count: body.count,
+        maxDevices: body.maxDevices,
+        channel: body.channel,
+        note: body.note,
+        kind: body.kind,
+      });
+      return sendJson(res, 200, { licenses });
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+  if (req.method === "POST" && pathname === "/api/admin/licenses/freeze") {
+    try {
+      const body = await readBody(req);
+      const license = licenseStore.freezeLicense(body.code, body.note);
+      return sendJson(res, 200, { license });
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+  if (req.method === "POST" && pathname === "/api/admin/licenses/revoke") {
+    try {
+      const body = await readBody(req);
+      const license = licenseStore.revokeLicense(body.code, body.note);
+      return sendJson(res, 200, { license });
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+  if (req.method === "POST" && pathname === "/api/admin/licenses/reset-devices") {
+    try {
+      const body = await readBody(req);
+      const license = licenseStore.resetDeviceBindings(body.code, body.note);
+      return sendJson(res, 200, { license });
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message });
+    }
   }
 
   if (req.method === "POST" && pathname === "/api/system/open-downloads") {
@@ -772,7 +990,21 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { error: "缺少必要参数：apiKey/createEndpoint/queryEndpointTemplate/model" });
       }
 
-      const job = await startJob(body);
+      const activation = getLicenseActivationSnapshot();
+      if (activation.status !== "active" || !activation.code) {
+        return sendJson(res, 403, { error: "请先完成激活后再开始生成。" });
+      }
+      if (activation.remainingUses <= 0) {
+        return sendJson(res, 403, { error: "当前注册码次数已用完，请更换或续发激活码。" });
+      }
+
+      const settings = readSettings();
+      const deviceId = settings.deviceId || await ensureDeviceIdentity();
+      const job = await startJob(body, {
+        code: activation.code,
+        activationToken: activation.activationToken,
+        deviceId,
+      });
       return sendJson(res, 200, serializeJob(job));
     } catch (error) {
       return sendJson(res, 500, { error: error.message });
@@ -791,6 +1023,7 @@ const server = http.createServer(async (req, res) => {
   sendJson(res, 404, { error: "Not found" });
 });
 
+void ensureDeviceIdentity();
 hydrateJobs();
 for (const job of jobs.values()) {
   if (job.taskId && !["SUCCEEDED", "SUCCESS", "DONE", "COMPLETED", "FAILED", "ERROR", "CANCELED", "CANCELLED"].includes(String(job.status).toUpperCase())) {
