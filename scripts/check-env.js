@@ -1,5 +1,10 @@
 const { execFileSync } = require("child_process");
 
+if (process.env.CI === "true" || process.env.AI_RIDER_SKIP_ENV_CHECK === "1") {
+  console.log("AI-Rider desktop environment check skipped in CI/build automation mode.");
+  process.exit(0);
+}
+
 const checks = [
   {
     name: "Node.js",

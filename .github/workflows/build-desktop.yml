@@ -35,6 +35,8 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        env:
+          AI_RIDER_SKIP_ENV_CHECK: "1"
         run: npm ci
 
       - name: Build mac package
