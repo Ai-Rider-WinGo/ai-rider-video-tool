@@ -24,8 +24,8 @@ const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
 const LICENSES_FILE = path.join(DATA_DIR, "licenses.json");
 const MIN_DURATION_SECONDS = 4;
-const PRODUCT_VERSION = "2.3.0";
-const PRODUCT_VERSION_LABEL = "2.3.0 License Activation Rollout";
+const PRODUCT_VERSION = "2.3.1";
+const PRODUCT_VERSION_LABEL = "2.3.1 Desktop Build Automation";
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });

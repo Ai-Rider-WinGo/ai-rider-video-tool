@@ -105,3 +105,10 @@ Detailed archive:
 - [2.0.0 PRD Draft](./versions/2.0.0.md)
 - [2.3.0 License System Plan](./versions/2.3.0-license-system.md)
 - [2.3.0 License Technical Design](./versions/2.3.0-license-tech.md)
+
+### 2.3.1
+
+- Added GitHub Actions automation for `mac + win` desktop packaging
+- Added Windows packaging configuration and `.ico` icon assets
+- Fixed CI installation failures caused by desktop environment checks during `postinstall`
+- Unified the current stable version as `2.3.1`

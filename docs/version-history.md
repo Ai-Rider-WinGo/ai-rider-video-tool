@@ -118,3 +118,10 @@
 - [2.3.0 激活码与注册码系统方案](./versions/2.3.0-license-system.md)
 - [2.3.0 激活码系统技术设计](./versions/2.3.0-license-tech.md)
 - [2.3.0 更新说明](./releases/2.3.0.md)
+
+### 2.3.1
+
+- 新增 GitHub Actions 自动打包 `mac + win`
+- 新增 Windows 打包配置与 `.ico` 图标资源
+- 修复 CI 环境中 `postinstall` 环境检查导致的安装失败
+- 统一当前稳定版本为 `2.3.1`
