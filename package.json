@@ -12,6 +12,8 @@
     "start:desktop": "electron .",
     "desktop": "npm run start:desktop",
     "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win nsis",
+    "build:desktop": "electron-builder --mac --win nsis",
     "postinstall": "npm run check:env"
   },
   "build": {
@@ -20,6 +22,7 @@
     "icon": "desktop/icon.icns",
     "files": [
       "desktop/**/*",
+      "lib/**/*",
       "public/**/*",
       "server.js",
       "settings.example.json",
@@ -30,7 +33,24 @@
       "output": "release"
     },
     "mac": {
-      "category": "public.app-category.video"
+      "category": "public.app-category.video",
+      "icon": "desktop/icon.icns"
+    },
+    "win": {
+      "icon": "desktop/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "${productName}-${version}-setup-${arch}.${ext}"
     }
   },
   "devDependencies": {

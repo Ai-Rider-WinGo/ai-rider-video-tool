@@ -14,6 +14,7 @@ Current stable version: `2.3.0`
 - [1.1.3 Release Notes](./docs/releases/1.1.3.en.md)
 - [Desktop Environment Setup](./docs/desktop-environment.en.md)
 - [Desktop App Roadmap](./docs/desktop-app-roadmap.en.md)
+- [Desktop Build Automation](./docs/desktop-builds.md)
 
 ## 2.x Overview
 

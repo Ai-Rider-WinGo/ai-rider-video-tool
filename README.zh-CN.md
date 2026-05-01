@@ -14,6 +14,7 @@ AI-Rider Video 正在从“首帧 + 尾帧 + 提示词”的桌面工具，升�
 - [1.1.3 发布说明](./docs/releases/1.1.3.md)
 - [桌面端环境说明](./docs/desktop-environment.md)
 - [桌面端路线图](./docs/desktop-app-roadmap.md)
+- [桌面端自动打包说明](./docs/desktop-builds.md)
 
 ## 2.x 版本概览
 
