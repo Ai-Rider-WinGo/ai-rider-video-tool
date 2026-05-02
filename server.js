@@ -8,6 +8,7 @@ const { promisify } = require("util");
 const { URL } = require("url");
 const { getCompatibleModel, getDefaultModelId, getRegistryMeta } = require("./lib/model-registry");
 const { createLicenseStore } = require("./lib/license-store");
+const { getApiKey, storeApiKey, isKeychainAvailable } = require("./lib/keychain");
 const execFileAsync = promisify(execFile);
 
 const HOST = "127.0.0.1";
@@ -178,7 +179,16 @@ function makeJobId() {
 function readSettings() {
   try {
     const raw = fs.readFileSync(SETTINGS_FILE, "utf8");
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Prefer keychain-stored API key; fall back to settings file (legacy migration)
+    const keychainKey = getApiKey();
+    if (keychainKey) {
+      parsed.apiKey = keychainKey;
+    } else if (parsed.apiKey) {
+      // Migrate: settings has key but keychain doesn't — store it
+      try { storeApiKey(parsed.apiKey); } catch { /* keychain write can fail */ }
+    }
+    return parsed;
   } catch {
     return {};
   }
@@ -206,6 +216,11 @@ function mergeProjectPaths(existing = [], incoming = []) {
 
 async function writeSettings(nextSettings) {
   const current = readSettings();
+  // If apiKey is provided, store in keychain and strip from file
+  if (nextSettings.apiKey !== undefined) {
+    try { storeApiKey(nextSettings.apiKey); } catch { /* keychain write can fail in CI */ }
+    delete nextSettings.apiKey;
+  }
   const merged = {
     ...current,
     ...nextSettings,
