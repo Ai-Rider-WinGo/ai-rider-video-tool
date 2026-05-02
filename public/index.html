@@ -251,6 +251,7 @@
                     <label id="firstFrameField" class="upload-panel">
                       <span data-i18n="firstFrame">首帧图片</span>
                       <div class="upload-box">
+                        <img class="upload-preview" hidden alt="首帧预览" />
                         <strong>点击或拖拽上传首帧</strong>
                         <p>支持 JPG / PNG，最大 10MB</p>
                         <input id="firstFrame" name="firstFrame" type="file" accept="image/*" />
@@ -263,6 +264,7 @@
                     <label id="lastFrameField" class="upload-panel">
                       <span data-i18n="lastFrame">尾帧图片</span>
                       <div class="upload-box">
+                        <img class="upload-preview" hidden alt="尾帧预览" />
                         <strong>点击或拖拽上传尾帧</strong>
                         <p>支持 JPG / PNG，最大 10MB</p>
                         <input id="lastFrame" name="lastFrame" type="file" accept="image/*" />
@@ -405,6 +407,10 @@
                         <label>
                           <span>API Key</span>
                           <input id="apiKey" name="apiKey" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="输入一次后可保存" required />
+                        </label>
+                        <label>
+                          <span>Admin Token</span>
+                          <input id="adminToken" name="adminToken" type="password" placeholder="用于管理注册码的鉴权令牌" />
                         </label>
                         <label>
                           <span data-i18n="createEndpoint">创建任务接口</span>
@@ -698,10 +704,12 @@
           <label>
             <span data-i18n="firstFrame">首帧图片</span>
             <input class="multi-first-frame" type="file" accept="image/*" />
+            <img class="multi-preview" hidden alt="首帧预览" />
           </label>
           <label>
             <span data-i18n="lastFrame">尾帧图片</span>
             <input class="multi-last-frame" type="file" accept="image/*" />
+            <img class="multi-preview" hidden alt="尾帧预览" />
           </label>
         </div>
         <div class="grid two">

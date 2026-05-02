@@ -35,6 +35,29 @@ const jobTimers = new Map();
 const MODEL_REGISTRY_META = getRegistryMeta();
 const licenseStore = createLicenseStore({ filePath: LICENSES_FILE });
 
+let adminToken = readSettings().adminToken || "";
+function ensureAdminToken() {
+  if (!adminToken) {
+    adminToken = crypto.randomUUID();
+    const settings = readSettings();
+    settings.adminToken = adminToken;
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf8");
+    console.log(`\n═══════════════════════════════════════════════`);
+    console.log(`  Admin Token (保存好，用于管理 API):`);
+    console.log(`  ${adminToken}`);
+    console.log(`═══════════════════════════════════════════════\n`);
+  }
+}
+function requireAdmin(req, res) {
+  const sent = (req.headers.authorization || "").trim();
+  const expected = `Bearer ${adminToken || readSettings().adminToken || ""}`;
+  if (!adminToken || sent !== expected) {
+    sendJson(res, 401, { error: "Unauthorized" });
+    return false;
+  }
+  return true;
+}
+
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
   res.writeHead(status, {
@@ -890,10 +913,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && pathname === "/api/admin/licenses") {
+    if (!requireAdmin(req, res)) return;
     return sendJson(res, 200, { licenses: licenseStore.listLicenses() });
   }
 
   if (req.method === "GET" && pathname.startsWith("/api/admin/licenses/")) {
+    if (!requireAdmin(req, res)) return;
     const code = decodeURIComponent(pathname.split("/").pop() || "");
     const license = licenseStore.getLicense(code);
     if (!license) return sendJson(res, 404, { error: "注册码不存在" });
@@ -901,6 +926,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && pathname === "/api/admin/licenses/generate") {
+    if (!requireAdmin(req, res)) return;
     try {
       const body = await readBody(req);
       const licenses = licenseStore.generateLicenses({
@@ -918,6 +944,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && pathname === "/api/admin/licenses/freeze") {
+    if (!requireAdmin(req, res)) return;
     try {
       const body = await readBody(req);
       const license = licenseStore.freezeLicense(body.code, body.note);
@@ -928,6 +955,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && pathname === "/api/admin/licenses/revoke") {
+    if (!requireAdmin(req, res)) return;
     try {
       const body = await readBody(req);
       const license = licenseStore.revokeLicense(body.code, body.note);
@@ -938,6 +966,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && pathname === "/api/admin/licenses/reset-devices") {
+    if (!requireAdmin(req, res)) return;
     try {
       const body = await readBody(req);
       const license = licenseStore.resetDeviceBindings(body.code, body.note);
@@ -1024,6 +1053,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 void ensureDeviceIdentity();
+ensureAdminToken();
 hydrateJobs();
 for (const job of jobs.values()) {
   if (job.taskId && !["SUCCEEDED", "SUCCESS", "DONE", "COMPLETED", "FAILED", "ERROR", "CANCELED", "CANCELLED"].includes(String(job.status).toUpperCase())) {

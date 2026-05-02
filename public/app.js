@@ -1177,6 +1177,9 @@ function renderMultiShots(count = Number(multiShotCount.value || 2)) {
       index < count - 1 ? t("transitionNext", { number: index + 1 }) : t("finalShot");
     applyI18n(node);
     multiShotsContainer.appendChild(node);
+    // Wire image preview for each multi-shot card
+    setupImagePreview(node.querySelector(".multi-first-frame"));
+    setupImagePreview(node.querySelector(".multi-last-frame"));
   }
 }
 
@@ -1330,6 +1333,36 @@ function renderCurrentModelTags() {
     chip.textContent = label;
     currentModelTags.appendChild(chip);
   }
+}
+
+function setupImagePreview(fileInput) {
+  if (!fileInput) return;
+  const box = fileInput.closest(".upload-box");
+  const img = box ? box.querySelector(".upload-preview") : fileInput.parentElement?.querySelector(".multi-preview");
+  if (!img) return;
+
+  // When viewing box as .upload-box, the text elements to show/hide
+  const textEls = box ? box.querySelectorAll("strong, p") : [];
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+    if (!file) {
+      img.hidden = true;
+      img.removeAttribute("src");
+      for (const el of textEls) el.hidden = false;
+      return;
+    }
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      img.src = dataUrl;
+      img.hidden = false;
+      for (const el of textEls) el.hidden = true;
+    } catch {
+      img.hidden = true;
+      img.removeAttribute("src");
+      for (const el of textEls) el.hidden = false;
+    }
+  });
 }
 
 async function fileToDataUrl(file) {
@@ -1842,6 +1875,7 @@ function collectSettings(includeApiKey = true) {
 
   if (includeApiKey) {
     settings.apiKey = $("apiKey").value.trim();
+    settings.adminToken = $("adminToken").value.trim();
   }
 
   return settings;
@@ -1876,6 +1910,7 @@ function updateDownloadDirectoryUI() {
 function applySettings(settings = {}) {
   const defaults = meta.defaults || {};
   $("apiKey").value = settings.apiKey || "";
+  $("adminToken").value = settings.adminToken || "";
   setGenerationMode(settings.generationMode || "single");
   generationTemplateSelect.value = settings.generationTemplate || "first_last_frame";
   multiShotCount.value = String(settings.multiShotCount || 2);
@@ -2474,6 +2509,9 @@ async function bootstrap() {
   updateStatusSurface();
   updateAdvancedPreview();
   setActiveView(currentView, { navKey: currentView });
+  // Wire single-mode image previews
+  setupImagePreview($("firstFrame"));
+  setupImagePreview($("lastFrame"));
 }
 
 bootstrap();
